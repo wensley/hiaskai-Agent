@@ -1,4 +1,10 @@
 import { create } from 'zustand'
+import {
+  isCustomSelection,
+  readCustomModels,
+  selectionUid,
+  type CustomModel,
+} from '../api/providers.js'
 import type { MessageUsage } from '../api/types.js'
 
 /**
@@ -17,7 +23,15 @@ const WINDOW: Record<string, number> = {
 /** 接口没有给出上下文窗口时按 128k 兜底 */
 const FALLBACK_WINDOW = 128_000
 
-export const contextWindowFor = (model: string): number => WINDOW[model] ?? FALLBACK_WINDOW
+/** 自定义模型按配置的窗口折算，其他模型查内置表 */
+export const contextWindowFor = (model: string, models?: CustomModel[]): number => {
+  if (isCustomSelection(model)) {
+    const uid = selectionUid(model)
+    const custom = (models ?? readCustomModels()).find((item) => item.uid === uid)
+    return custom?.contextWindow ?? FALLBACK_WINDOW
+  }
+  return WINDOW[model] ?? FALLBACK_WINDOW
+}
 
 const CACHE_KEY = 'chat-agent:context-usage'
 /** 只保留最近 200 个会话，避免键无限增长 */

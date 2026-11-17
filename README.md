@@ -64,6 +64,29 @@ localStorage.setItem('chat-agent:mock-agent', 'true')
 
 演示模式使用本地脚本化模型，按问题自动选择剧本：天气与报告、桌面端写文件、MCP 笔记检索。它用来验证协议、审批、产物与渲染是否正常，不做真实推理；剧本依赖对应工具已经注册（例如 MCP 剧本需要先连上带 `notes_search` 的服务器）。
 
+## 自定义模型
+
+模型选择器右上角的「管理自定义模型」可以接入任意 **OpenAI 兼容** 或 **Anthropic 兼容** 的模型，不再局限于 `api.deepseek.com`：OpenRouter、中转站、自建网关、本机 Ollama / vLLM 都可以直接填。
+
+设置 → **模型接入** → 添加模型：
+
+| 字段 | 说明 |
+| --- | --- |
+| 名称 | 选择器与状态条上显示的名字，留空用模型 ID |
+| 协议 | OpenAI 兼容请求 `<接口地址>/chat/completions`，Anthropic 兼容请求 `<接口地址>/messages` |
+| 模型 ID | 原样下发的 `model` 字段，例如 `gpt-4o-mini`、`claude-sonnet-4-5` |
+| 接口地址 | 填到 `/v1` 这一级，例如 `https://api.openai.com/v1` |
+| API Key | 留空则复用「数据管理」里保存的 DeepSeek Key；填了就用这一个 |
+| 上下文窗口 | 只用于右下角占用圆环的折算 |
+| 工具调用 | 关掉后退化为纯聊天，不再声明工具 |
+| 思考参数 | 打开后把思考强度以 `reasoning_effort` 下发，仅对支持的模型有效 |
+
+配置全部存在浏览器 `localStorage`，请求由浏览器直连服务商，不经过任何自建后端，所以服务商必须允许跨域（CORS）。添加时可以点「测试连接」，用 `GET /models` 验证地址与 Key 是否可用。
+
+适配层把应用内部的 Anthropic 形态事件翻译成 OpenAI 的流式分片：正文、思考块（`reasoning_content`）、`tool_calls` 参数分片拼接、以及末尾的用量统计，因此工具调用循环、状态条、上下文占用圆环在自定义模型下与内置模型表现一致。
+
+已知边界：附件上传、联网搜索与自动标题依赖 DeepSeek 内置接口，自定义模型下不可用；子 Agent 固定走内置接口。
+
 ## 部署到 GitHub Pages
 
 仓库自带 [`.github/workflows/pages.yml`](.github/workflows/pages.yml)：推送到 `main` 后自动执行类型检查、lint、构建并发布到 Pages。

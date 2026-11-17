@@ -1,4 +1,7 @@
-import { translate, type TranslationMessage } from '../../i18n/index.js'
+import { ApiError, type ApiErrorKind } from './apiError.js'
+import { API_ORIGIN, ANTHROPIC_BASE_URL } from './origin.js'
+import { messagesUrl, type ModelTarget } from './providers.js'
+import { streamOpenAI } from './openai.js'
 import { readMessageEvent } from './parseEvent.js'
 import { readServerSentEvents } from './sse.js'
 import type {
@@ -9,38 +12,11 @@ import type {
   MessageStreamEvent,
 } from './types.js'
 
-/** 构建期 API 地址，默认 https://api.deepseek.com；本地开发支持开发服务器代理 */
-export const API_ORIGIN = __API_ORIGIN__
-/** Anthropic 兼容接口的前缀 */
-const ANTHROPIC_BASE_URL = `${API_ORIGIN}/anthropic/v1`
+export { ApiError }
+export type { ApiErrorKind }
+export { API_ORIGIN }
 /** 引用 Files API 上传的图片、调用 Anthropic 兼容 Files API 时必须携带 */
 const FILES_BETA = 'files-api-2025-04-14'
-
-export type ApiErrorKind =
-  /** 非 2xx 响应 */
-  | 'http'
-  /** 流中返回的错误帧（如等待生成超时），随后连接关闭 */
-  | 'stream'
-  /** 请求没有到达服务端（断网、跨域被拦截等） */
-  | 'network'
-  /** 流在 message_stop 之前结束 */
-  | 'interrupted'
-  /** 响应不符合协议（如非 SSE 响应） */
-  | 'protocol'
-
-export class ApiError extends Error {
-  readonly localMessage?: TranslationMessage
-
-  constructor(
-    readonly kind: ApiErrorKind,
-    message: string | TranslationMessage,
-    readonly status?: number
-  ) {
-    super(typeof message === 'string' ? message : translate(message.key, message.params))
-    this.name = 'ApiError'
-    this.localMessage = typeof message === 'string' ? undefined : message
-  }
-}
 
 const isErrorBody = (value: unknown): value is ApiErrorBody =>
   typeof value === 'object' &&
@@ -138,24 +114,58 @@ const hasFile = (body: CreateMessageRequest) =>
   )
 
 /**
- * POST /anthropic/v1/messages（stream: true），逐个产出流式事件，收到 message_stop 时结束。
+ * 第三方 Anthropic 兼容实现不认识 DeepSeek 的扩展字段（safety_check、title、reasoning_effort），
+ * 显式挑出通用字段再发送，避免被严格的实现判成 400。
+ */
+const toAnthropicBody = (body: CreateMessageRequest, native: boolean) =>
+  native
+    ? { ...body, stream: true }
+    : {
+        model: body.model,
+        system: body.system,
+        messages: body.messages,
+        thinking: body.thinking,
+        tools: body.tools,
+        ...(body.tool_choice ? { tool_choice: body.tool_choice } : {}),
+        ...(typeof body.temperature === 'number' ? { temperature: body.temperature } : {}),
+        ...(typeof body.top_p === 'number' ? { top_p: body.top_p } : {}),
+        stream: true,
+      }
+
+/**
+ * 发起一轮生成并按协议适配成统一的流式事件：
+ * 内置与自定义 Anthropic 兼容模型走 /messages，自定义 OpenAI 兼容模型走 /chat/completions。
  * ping、保活注释与无法解析的内容不产出；中止请求时抛出 signal 的 AbortError。
  */
 export async function* streamMessage(
-  apiKey: string,
+  target: ModelTarget,
   body: CreateMessageRequest,
   signal: AbortSignal
 ): AsyncGenerator<MessageStreamEvent> {
-  const response = await request(`${ANTHROPIC_BASE_URL}/messages`, {
-    method: 'POST',
-    headers: {
-      ...anthropicHeaders(apiKey, hasFile(body)),
-      'Content-Type': 'application/json',
-      Accept: 'text/event-stream',
-    },
-    body: JSON.stringify({ ...body, stream: true }),
-    signal,
-  })
+  if (target.protocol === 'openai') {
+    yield* streamOpenAI(target, body, signal)
+    return
+  }
+  const response = await request(
+    target.builtin ? `${ANTHROPIC_BASE_URL}/messages` : messagesUrl(target.baseUrl),
+    {
+      method: 'POST',
+      headers: {
+        // 第三方实现多数认 Bearer，内置接口沿用 x-api-key；两者都带可以同时兼容
+        ...anthropicHeaders(target.apiKey, target.builtin && hasFile(body)),
+        ...(target.builtin
+          ? {}
+          : {
+              Authorization: `Bearer ${target.apiKey}`,
+              'anthropic-version': '2023-06-01',
+            }),
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
+      },
+      body: JSON.stringify(toAnthropicBody(body, target.builtin)),
+      signal,
+    }
+  )
   const contentType = response.headers.get('Content-Type') ?? ''
   if (!response.body || !contentType.includes('text/event-stream')) {
     throw await readErrorResponse(response, 'protocol', '')

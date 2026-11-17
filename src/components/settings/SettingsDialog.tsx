@@ -38,7 +38,8 @@ import {
   type ThemePreference,
 } from '../../services/settings.js'
 import { useTranslate, type TranslationKey, type TranslationMessage } from '../../i18n/index.js'
-import { IconSpark } from '../agent/ToolIcons.js'
+import { IconPlug, IconSpark } from '../agent/ToolIcons.js'
+import { CustomModels } from './CustomModels.js'
 import { Button } from '../base/Button.js'
 import { Modal } from '../base/Modal.js'
 import { Select } from '../base/Select.js'
@@ -63,6 +64,7 @@ const sections: { value: SettingsSection; label: TranslationKey; icon: ReactNode
     label: 'settingDialogAsideGeneralOptionLabel',
     icon: <IconSettingsOutline16 />,
   },
+  { value: 'models', label: 'settingDialogAsideModelsOptionLabel', icon: <IconPlug /> },
   { value: 'agent', label: 'settingDialogAsideAgentOptionLabel', icon: <IconSpark /> },
   { value: 'data', label: 'settingDialogAsideDataOptionLabel', icon: <IconDataOutline16 /> },
 ]
@@ -115,6 +117,8 @@ const SettingsContent = () => {
               <LocationSetting />
               <MotionSetting />
             </>
+          ) : section === 'models' ? (
+            <CustomModels />
           ) : section === 'agent' ? (
             <>
               <AgentEnabledSetting />

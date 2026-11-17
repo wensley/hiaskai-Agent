@@ -1,5 +1,15 @@
 import { create } from 'zustand'
 import type { TtsVoice } from './api/speech.js'
+import {
+  createModelUid,
+  customSelection,
+  isCustomSelection,
+  normalizeCustomModel,
+  readCustomModels,
+  saveCustomModels,
+  selectionUid,
+  type CustomModel,
+} from './api/providers.js'
 import { normalizeLocation, type UserLocation } from './location.js'
 
 export type Locale = 'zh-CN' | 'en-US'
@@ -14,8 +24,10 @@ type Settings = {
   themePreference: ThemePreference
   location: UserLocation | null
   ttsVoice: TtsVoice
-  /** 当前模型；远端拉取的模型 id 直接存放 */
+  /** 当前模型；远端拉取的模型 id 直接存放，自定义模型为 custom:<uid> */
   model: string
+  /** 用户自己添加的模型（第三方或中转站），存 localStorage */
+  customModels: CustomModel[]
   thinking: boolean
   /** 思考强度 0-4，0 为关闭；与 thinking 保持同步 */
   reasoningEffort: number
@@ -138,7 +150,15 @@ export const EFFORT_LEVELS = 4
 
 const initialModel = (): string => {
   const saved = read(KEYS.model)?.trim()
-  return saved ? saved : DEFAULT_MODEL
+  if (!saved) {
+    return DEFAULT_MODEL
+  }
+  // 自定义模型被删掉后选择器会留下死链，启动时收敛回默认模型
+  if (isCustomSelection(saved)) {
+    const uid = selectionUid(saved)
+    return readCustomModels().some((item) => item.uid === uid) ? saved : DEFAULT_MODEL
+  }
+  return saved
 }
 
 const initialEffort = (): number => {
@@ -171,6 +191,7 @@ export const useSettings = create<Settings>(() => ({
   themePreference: initialThemePreference(),
   ttsVoice: initialTtsVoice(),
   model: initialModel(),
+  customModels: readCustomModels(),
   thinking: initialEffort() > 0,
   reasoningEffort: initialEffort(),
   search: read(KEYS.search) === 'true',
@@ -298,4 +319,52 @@ export const setMockAgent = (mockAgent: boolean) => {
 export const setMotion = (motion: Settings['motion']) => {
   write(KEYS.motion, motion)
   useSettings.setState({ motion })
+}
+
+/** 新增自定义模型时由调用方提供，uid 与创建时间在这里补齐 */
+export type CustomModelInput = Omit<CustomModel, 'uid' | 'createdAt'>
+
+const persistCustomModels = (models: CustomModel[]) => {
+  saveCustomModels(models)
+  useSettings.setState({ customModels: models })
+}
+
+/** 保存自定义模型：同 uid 覆盖，否则追加，返回落库后的条目 */
+export const addCustomModel = (input: CustomModelInput): CustomModel | null => {
+  const model = normalizeCustomModel({
+    ...input,
+    uid: createModelUid(),
+    createdAt: Date.now(),
+  })
+  if (!model) {
+    return null
+  }
+  persistCustomModels([...useSettings.getState().customModels, model])
+  return model
+}
+
+/** 修改已有条目；改出非法结构时保持原样，返回是否生效 */
+export const updateCustomModel = (uid: string, patch: Partial<CustomModelInput>): boolean => {
+  const current = useSettings.getState().customModels
+  const index = current.findIndex((item) => item.uid === uid)
+  if (index < 0) {
+    return false
+  }
+  const next = normalizeCustomModel({ ...current[index], ...patch, uid })
+  if (!next) {
+    return false
+  }
+  const models = [...current]
+  models[index] = next
+  persistCustomModels(models)
+  return true
+}
+
+/** 删除后把指向它的选择收敛回默认模型，避免请求打到不存在的配置上 */
+export const removeCustomModel = (uid: string) => {
+  const models = useSettings.getState().customModels.filter((item) => item.uid !== uid)
+  persistCustomModels(models)
+  if (useSettings.getState().model === customSelection(uid)) {
+    setModel(DEFAULT_MODEL)
+  }
 }

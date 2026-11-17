@@ -1,11 +1,29 @@
-import { API_ORIGIN } from './client.js'
+import { API_ORIGIN } from './origin.js'
+import {
+  customModelOptions,
+  isCustomSelection,
+  readCustomModels,
+  selectionUid,
+  type CustomModel,
+} from './providers.js'
 
-/** 模型选项：远端拉取的排在内置列表之前，来源用于界面提示 */
+/** 模型选项：自定义与远端拉取的排在内置列表之前，来源用于界面提示 */
 export type ModelOption = {
   id: string
   label: string
-  source: 'remote' | 'builtin'
+  source: 'remote' | 'builtin' | 'custom'
+  /** 副标题：自定义模型用「模型 ID · 接口地址」区分同名条目 */
+  hint?: string
 }
+
+/** 自定义模型在选择器里的条目；值形如 custom:<uid> */
+export const customModelOptionList = (models: CustomModel[] = readCustomModels()): ModelOption[] =>
+  customModelOptions(models).map((item) => ({
+    id: item.value,
+    label: item.label,
+    hint: item.hint,
+    source: 'custom' as const,
+  }))
 
 /** 服务不可达或 Key 无效时的兜底列表，保证选择器永远可用 */
 export const BUILTIN_MODELS: ModelOption[] = [
@@ -29,8 +47,15 @@ export const prettyModelName = (id: string): string =>
     .map((part) => (part.length <= 3 ? part.toUpperCase() : part[0].toUpperCase() + part.slice(1)))
     .join(' ')
 
-export const modelLabel = (id: string): string =>
-  BUILTIN_MODELS.find((item) => item.id === id)?.label ?? prettyModelName(id)
+/** 选择器里保存的值可能是自定义模型的 custom:<uid>，这里按当前存储还原显示名 */
+export const modelLabel = (id: string): string => {
+  if (isCustomSelection(id)) {
+    const uid = selectionUid(id)
+    const custom = readCustomModels().find((item) => item.uid === uid)
+    return custom?.label ?? '自定义模型'
+  }
+  return BUILTIN_MODELS.find((item) => item.id === id)?.label ?? prettyModelName(id)
+}
 
 export const readCachedModels = (): ModelOption[] | null => {
   try {

@@ -602,3 +602,152 @@ body[data-ds-dark-theme] .slider input[type='range'] {
     max-width: 100%;
   }
 }
+
+/* 自定义模型：列表 + 编辑弹窗 */
+.modelsEmpty {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px dashed var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.modelsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.modelsItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+}
+
+.modelsMain {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.modelsName {
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modelsMeta {
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modelsBadge {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 11px;
+  background-color: var(--dsw-specific-selector);
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 22px;
+}
+
+.modelsFootnote {
+  margin-top: 8px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.editor {
+  width: min(560px, 92vw);
+}
+
+.editorForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: grid;
+  align-items: center;
+  grid-template-areas:
+    'label control'
+    'hint hint';
+  grid-template-columns: 92px 1fr;
+  gap: 6px 12px;
+}
+
+.fieldLabel {
+  grid-area: label;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.fieldControl {
+  display: flex;
+  grid-area: control;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.fieldControl > input,
+.fieldControl > button {
+  width: 100%;
+}
+
+.fieldHint {
+  grid-area: hint;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.editorInput {
+  box-sizing: border-box;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 10px;
+  outline: none;
+  background-color: var(--dsw-specific-login-input);
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 14px;
+
+  &:focus-visible {
+    border-color: var(--dsw-alias-brand-primary);
+  }
+}
+
+.editorActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.editorOk {
+  color: var(--dsw-alias-brand-primary);
+  font-size: 12px;
+  line-height: 18px;
+}

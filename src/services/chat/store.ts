@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { createId } from '../../utils/id.js'
 import { ApiError, streamMessage } from '../api/client.js'
+import { resolveModelTarget } from '../api/providers.js'
 import type { ChatModel, CreateMessageRequest, RequestTool } from '../api/types.js'
 import { extractFileIds, getFileErrorCode, isRetryableApiError } from '../api/errors.js'
 import { cancelUpload, describeUploadError, uploadAttachment, useUploads } from '../attachments.js'
@@ -69,9 +70,23 @@ const serverTools = (search: boolean): RequestTool[] => {
  * 本轮声明的工具：服务端联网能力 + 客户端工具。
  * 关闭 agent 时只保留服务端工具，退化为原有聊天体验。
  */
-const requestTools = (search: boolean, agentEnabled: boolean): RequestTool[] => {
-  const tools = serverTools(search)
+const requestTools = (
+  search: boolean,
+  agentEnabled: boolean,
+  /** 自定义模型走第三方接口，deepseek_* 服务端工具它们不认识，不声明 */
+  allowServerTools = true
+): RequestTool[] => {
+  const tools = allowServerTools ? serverTools(search) : []
   return agentEnabled ? [...tools, ...buildToolDeclarations()] : tools
+}
+
+/** 第三方接口不会回传标题，用首条提问截一段本地生成，避免会话列表全是未命名 */
+const fallbackTitle = (text: string) => {
+  const line = text.replace(/\s+/g, ' ').trim()
+  if (!line) {
+    return ''
+  }
+  return line.length > 40 ? `${line.slice(0, 40)}…` : line
 }
 
 /** 允许自动补标题的请求；手动重命名后取消本轮标题写入，包含主动清空标题的情况。 */
@@ -997,6 +1012,15 @@ const streamReply = async (sessionId: string, initial: AssistantMessage, request
 
   try {
     const settings = useSettings.getState()
+    /**
+     * 本轮实际使用的接口：内置 DeepSeek 接口，或设置里自己添加的第三方模型。
+     * 选择器保存的是选择键（自定义模型为 custom:<uid>），这里解析成请求参数。
+     */
+    const target = resolveModelTarget(
+      initial.model ?? settings.model,
+      settings.apiKey,
+      settings.customModels
+    )
     // 续写使用前缀，不能同时跑工具循环；关闭 agent 时退化为普通聊天。
     const agentEnabled = settings.agentEnabled && !request.prefix
     // 关掉「最大步数」后不设上限，交给用户自己盯；打开时按设置值收口
@@ -1019,7 +1043,10 @@ const streamReply = async (sessionId: string, initial: AssistantMessage, request
         let preparing = true
         let receivedContent = false
         try {
-          const prepared = await prepareFiles(sessionId, request, controller.signal)
+          // 附件通过 DeepSeek Files API 引用，第三方模型用不了，直接跳过补传
+          const prepared = target.builtin
+            ? await prepareFiles(sessionId, request, controller.signal)
+            : { history: request.history, question: request.question, prefix: request.prefix }
           preparing = false
           // 附件就绪后获取本轮信息；续写沿用原回答快照，重新生成的快照独立保存。
           const latestReminder = prepared.prefix
@@ -1037,10 +1064,11 @@ const streamReply = async (sessionId: string, initial: AssistantMessage, request
             // 工具轮回：把本轮已产生的调用与结果接在提问之后
             round > 0 ? reply : undefined
           )
-          const withTitle = round === 0 && titleRequests.has(controller)
+          // 自动标题是 DeepSeek 的扩展能力，第三方接口不会回传
+          const withTitle = target.builtin && round === 0 && titleRequests.has(controller)
           const effort = initial.thinking ? useSettings.getState().reasoningEffort : 0
           const body: CreateMessageRequest = {
-            model: initial.model ?? settings.model ?? MODEL,
+            model: target.model,
             system: SYSTEM_PROMPT,
             messages,
             thinking: initial.thinking
@@ -1056,16 +1084,21 @@ const streamReply = async (sessionId: string, initial: AssistantMessage, request
             // 采样参数留空时不下发，走服务端默认值
             ...(settings.temperature !== null ? { temperature: settings.temperature } : {}),
             ...(settings.topP !== null ? { top_p: settings.topP } : {}),
-            tools: requestTools(initial.search ?? false, agentEnabled && !fallbackWithoutTools),
+            tools: requestTools(
+              initial.search ?? false,
+              agentEnabled && !fallbackWithoutTools && target.tools,
+              target.builtin
+            ),
             ...(withTitle ? { title: { enabled: true } } : {}),
           }
           if (!metricsStarted) {
             metricsStarted = true
-            beginLiveRun(sessionId, body.model)
+            // 状态条按选择键显示模型名，自定义模型才能显示用户起的名字
+            beginLiveRun(sessionId, target.selection)
           }
           const events = settings.mockAgent
             ? mockStreamMessage(body, controller.signal)
-            : streamMessage(settings.apiKey ?? '', body, controller.signal)
+            : streamMessage(target, body, controller.signal)
           const blockIndexes = new Map<number, number>()
           for await (const event of events) {
             receivedContent ||= event.type === 'content_block_start'
@@ -1103,6 +1136,19 @@ const streamReply = async (sessionId: string, initial: AssistantMessage, request
             }
           }
           reply = settleReply(reply, 'done', Date.now())
+          // 第三方接口不会回传标题：首轮结束后用提问内容兜底，会话列表才不是一片未命名
+          if (
+            !target.builtin &&
+            titleRequests.has(controller) &&
+            !controller.signal.aborted &&
+            !get().importingHistory
+          ) {
+            const title = fallbackTitle(request.question.content)
+            if (title) {
+              updateSession(sessionId, (session) => (session.title ? session : { ...session, title }))
+            }
+            titleRequests.delete(controller)
+          }
           hasPendingTools =
             agentEnabled &&
             !fallbackWithoutTools &&

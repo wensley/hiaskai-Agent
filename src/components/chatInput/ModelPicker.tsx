@@ -9,19 +9,28 @@ import {
 } from '../base/icons.js'
 import {
   BUILTIN_MODELS,
+  customModelOptionList,
   fetchRemoteModels,
   modelLabel,
   readCachedModels,
   type ModelOption,
 } from '../../services/api/models.js'
 import { setModel, useSettings } from '../../services/settings.js'
+import { openSettings } from '../settings/settingsDialogState.js'
 import { showToast } from '../base/toastState.js'
 import { useTranslate } from '../../i18n/index.js'
 import styles from './ModelPicker.module.css'
 
-const mergeModels = (remote: ModelOption[]): ModelOption[] => {
-  const seen = new Set(remote.map((item) => item.id))
-  return [...remote, ...BUILTIN_MODELS.filter((item) => !seen.has(item.id))]
+/** 自定义模型排最前（用户刚配的就是想用的），其次远端，最后内置兜底 */
+const mergeModels = (remote: ModelOption[], custom: ModelOption[]): ModelOption[] => {
+  const seen = new Set<string>()
+  return [...custom, ...remote, ...BUILTIN_MODELS].filter((item) => {
+    if (seen.has(item.id)) {
+      return false
+    }
+    seen.add(item.id)
+    return true
+  })
 }
 
 /**
@@ -33,7 +42,10 @@ export const ModelPicker = () => {
   const model = useSettings((state) => state.model)
   const mockAgent = useSettings((state) => state.mockAgent)
   const [open, setOpen] = useState(false)
-  const [models, setModels] = useState<ModelOption[]>(() => mergeModels(readCachedModels() ?? []))
+  const customModels = useSettings((state) => state.customModels)
+  const [models, setModels] = useState<ModelOption[]>(() =>
+    mergeModels(readCachedModels() ?? [], customModelOptionList())
+  )
   const [loading, setLoading] = useState(false)
   const [, setSource] = useState<'cache' | 'remote' | 'builtin'>(
     readCachedModels() ? 'cache' : 'builtin'
@@ -65,7 +77,7 @@ export const ModelPicker = () => {
       setLoading(true)
       try {
         const remote = await fetchRemoteModels(apiKey)
-        setModels(mergeModels(remote))
+        setModels(mergeModels(remote, customModelOptionList()))
         setSource('remote')
       } catch {
         setSource(readCachedModels() ? 'cache' : 'builtin')
@@ -90,13 +102,28 @@ export const ModelPicker = () => {
     }
   }, [open, mockAgent, refresh])
 
+  // 设置里增删自定义模型后，选择器立即跟着变
+  useEffect(() => {
+    setModels((current) =>
+      mergeModels(
+        current.filter((item) => item.source === 'remote'),
+        customModelOptionList(customModels)
+      )
+    )
+  }, [customModels])
+
   const sourceText = useMemo(() => {
     if (loading) {
       return t('modelRefreshing')
     }
     // 缓存里的远端列表同样按远端展示，刷新失败才回落到内置文案
-    const count = models.filter((item) => item.source === 'remote').length
-    return count > 0 ? t('modelRemoteOk', { count }) : t('modelBuiltinFallback')
+    const remoteCount = models.filter((item) => item.source === 'remote').length
+    const customCount = models.filter((item) => item.source === 'custom').length
+    const base =
+      remoteCount > 0 ? t('modelRemoteOk', { count: remoteCount }) : t('modelBuiltinFallback')
+    return customCount > 0
+      ? `${base} · ${t('modelCustomCount', { count: customCount })}`
+      : base
   }, [loading, models, t])
 
   return (
@@ -136,6 +163,16 @@ export const ModelPicker = () => {
                   <IconRefreshOutline16 />
                   {loading ? t('modelRefreshing') : t('modelRemoteFetch')}
                 </button>
+                <button
+                  type="button"
+                  className={styles.refresh}
+                  onClick={() => {
+                    setOpen(false)
+                    openSettings('models')
+                  }}
+                >
+                  {t('modelCustomSection')}
+                </button>
               </div>
               <div className={styles.list}>
                 {models.map((item) => (
@@ -152,7 +189,7 @@ export const ModelPicker = () => {
                   >
                     <span className={styles.optionMain}>
                       <span className={styles.optionName}>{item.label}</span>
-                      <span className={styles.optionId}>{item.id}</span>
+                      <span className={styles.optionId}>{item.hint ?? item.id}</span>
                     </span>
                     {item.id === model ? <IconCheckedOutline14 /> : null}
                   </button>

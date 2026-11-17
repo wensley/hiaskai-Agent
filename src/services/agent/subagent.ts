@@ -1,4 +1,5 @@
 import { streamMessage } from '../api/client.js'
+import { resolveModelTarget } from '../api/providers.js'
 import type {
   ClientToolDefinition,
   CreateMessageRequest,
@@ -135,6 +136,8 @@ export type SubagentResult = {
  */
 export const runSubagent = async (input: SubagentInput): Promise<SubagentResult> => {
   const settings = useSettings.getState()
+  // 子 Agent 始终走内置接口：它依赖服务端工具与文件能力，第三方模型未必支持
+  const target = resolveModelTarget(SUBAGENT_MODEL, settings.apiKey, settings.customModels)
   const picked = pickTools(input.tools)
   const declarations = picked.map(toDeclaration)
   const messages: MessageParam[] = [{ role: 'user', content: input.task }]
@@ -150,7 +153,7 @@ export const runSubagent = async (input: SubagentInput): Promise<SubagentResult>
     rounds = round
     input.onProgress(`子 Agent 第 ${round} 轮推理`)
     const body: CreateMessageRequest = {
-      model: SUBAGENT_MODEL,
+      model: target.model,
       system: SYSTEM_PROMPT,
       messages,
       thinking: { type: 'disabled' },
@@ -162,7 +165,7 @@ export const runSubagent = async (input: SubagentInput): Promise<SubagentResult>
     }
     const events = settings.mockAgent
       ? mockStreamMessage(body, input.signal)
-      : streamMessage(settings.apiKey ?? '', body, input.signal)
+      : streamMessage(target, body, input.signal)
     const { text, calls } = await collect(events)
     report = text.trim() || report
     if (calls.length === 0) {

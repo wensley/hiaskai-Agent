@@ -37,8 +37,9 @@ export const ContextRing = ({
 }) => {
   const t = useTranslate()
   const model = useSettings((state) => state.model)
+  const customModels = useSettings((state) => state.customModels)
   const tokens = useContextUsage((state) => (sessionId ? (state.byId[sessionId]?.tokens ?? 0) : 0))
-  const window = contextWindowFor(model)
+  const window = contextWindowFor(model, customModels)
   const ratio = window > 0 ? Math.min(1, tokens / window) : 0
   const percent = Math.round(ratio * 100)
   const level = ratio >= 0.85 ? 'full' : ratio >= 0.6 ? 'high' : 'normal'

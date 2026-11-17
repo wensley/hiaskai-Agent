@@ -39,6 +39,23 @@ declare const styles: {
   readonly "importConfirmText": string;
   readonly "deleteConfirm": string;
   readonly "deleteActions": string;
+  readonly "modelsEmpty": string;
+  readonly "modelsList": string;
+  readonly "modelsItem": string;
+  readonly "modelsMain": string;
+  readonly "modelsName": string;
+  readonly "modelsMeta": string;
+  readonly "modelsBadge": string;
+  readonly "modelsFootnote": string;
+  readonly "editor": string;
+  readonly "editorForm": string;
+  readonly "field": string;
+  readonly "fieldLabel": string;
+  readonly "fieldControl": string;
+  readonly "fieldHint": string;
+  readonly "editorInput": string;
+  readonly "editorActions": string;
+  readonly "editorOk": string;
 };
 export = styles;
 
