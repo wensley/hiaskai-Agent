@@ -72,7 +72,8 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  width: 292px;
+  /* 手机竖屏下不超过视口，浮层始终可点 */
+  width: min(292px, calc(100vw - 24px));
   padding: 10px;
   border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 16px;

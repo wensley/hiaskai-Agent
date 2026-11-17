@@ -38,7 +38,7 @@ body[data-ds-dark-theme] .card {
   position: absolute;
   top: -120px;
   left: 50%;
-  width: 420px;
+  width: min(420px, calc(100vw - 28px));
   height: 220px;
   transform: translateX(-50%);
   background: radial-gradient(closest-side, rgba(245, 158, 11, 0.22), transparent 70%);

@@ -10,6 +10,14 @@
   }
 }
 
+/* 手机竖屏：两侧留白收到 16px，正文、代码块与表格能用满屏幕宽度 */
+@media (max-width: 767px) {
+  :root {
+    --message-list-max-width: 100%;
+    --message-list-padding-horizontal: 16px;
+  }
+}
+
 body {
   overflow: hidden;
   margin: 0;

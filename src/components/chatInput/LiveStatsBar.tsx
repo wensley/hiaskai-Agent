@@ -82,8 +82,11 @@ export const LiveStatsBar = ({ sessionId }: { sessionId: string | null }) => {
           <Stat label={t('liveInput')} value={formatTokens(metrics.inputTokens)} unit="tok" />
           <Stat label={t('liveOutput')} value={formatTokens(metrics.outputTokens)} unit="tok" />
           <Stat label={t('liveFirstToken')} value={formatFirstToken(metrics.firstTokenMs)} />
-          <Stat label={t('liveCache')} value={formatCache(metrics.cacheRate)} />
-          <Stat label={t('liveSpeed')} value={formatSpeed(metrics.tps)} unit="tok/s" />
+          {/* 手机上放不下六项：缓存与瞬时速度优先让位，其余指标必须一屏看完 */}
+          <span className={styles.optional}>
+            <Stat label={t('liveCache')} value={formatCache(metrics.cacheRate)} />
+            <Stat label={t('liveSpeed')} value={formatSpeed(metrics.tps)} unit="tok/s" />
+          </span>
           <Stat label={t('liveElapsed')} value={formatElapsed(metrics.elapsed)} />
           {current && current.rounds > 1 ? (
             <span className={clsx(styles.stat, styles.rounds)}>

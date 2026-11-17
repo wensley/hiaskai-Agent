@@ -150,6 +150,17 @@
   font-size: 10px;
 }
 
+/* 默认不参与布局，手机上整组隐藏，桌面保持原样 */
+.optional {
+  display: contents;
+}
+
+@media not all and (min-width: 480px) {
+  .optional {
+    display: none;
+  }
+}
+
 /* 生成中沿着底边扫过的一道极淡光带 */
 .sweep {
   position: absolute;

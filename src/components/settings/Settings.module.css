@@ -751,3 +751,43 @@ body[data-ds-dark-theme] .slider input[type='range'] {
   font-size: 12px;
   line-height: 18px;
 }
+
+/* 手机：模型列表与编辑表单各自收成一列，避免在 360px 上互相挤压 */
+@media not all and (min-width: 560px) {
+  .modelsBadge {
+    display: none;
+  }
+
+  .modelsItem {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .modelsMain {
+    flex-basis: 100%;
+  }
+
+  .editor {
+    width: calc(100vw - 24px);
+  }
+
+  .field {
+    align-items: start;
+    grid-template-areas:
+      'label'
+      'control'
+      'hint';
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .fieldLabel {
+    font-size: 12px;
+    line-height: 18px;
+  }
+
+  .fieldControl > input,
+  .fieldControl > button {
+    width: 100%;
+  }
+}
