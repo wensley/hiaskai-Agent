@@ -198,6 +198,8 @@ export const en = {
   settingsModelsTesting: 'Testing…',
   settingsModelsTestOk: 'Connected, {count} models returned',
   settingsModelsTestFailed: 'Connection failed: {message}',
+  settingsModelsCorsHint:
+    'Blocked by the browser: this endpoint does not allow cross-origin requests (CORS), or is unreachable. Try a same-site proxy such as /api/... instead.',
   settingsModelsInvalid: 'Enter a model ID and a full http(s):// base URL',
   settingsModelsSave: 'Save',
   settingsModelsAttachmentHint:

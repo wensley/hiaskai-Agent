@@ -187,6 +187,8 @@ export const zh = {
   settingsModelsTesting: '测试中…',
   settingsModelsTestOk: '连接正常，接口返回 {count} 个模型',
   settingsModelsTestFailed: '连接失败：{message}',
+  settingsModelsCorsHint:
+    '请求被浏览器拦截：该地址不允许跨域（CORS），或地址不可达。可改用站点中转地址 /api/... 再试。',
   settingsModelsInvalid: '请填写模型 ID，并把接口地址填成 http(s):// 开头的完整地址',
   settingsModelsSave: '保存',
   settingsModelsAttachmentHint: '附件上传、联网搜索与自动标题依赖 DeepSeek 内置接口，自定义模型下不可用。',

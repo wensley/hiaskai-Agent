@@ -11,7 +11,8 @@
     "run_worker_first": true
   },
   "vars": {
-    "AMD_API_ORIGIN": "https://developer.amd.com.cn/radeon/api/v1"
+    "AMD_API_ORIGIN": "https://developer.amd.com.cn/radeon/api/v1",
+    "OPENCODE_API_ORIGIN": "https://myapi.222532.xyz/v1"
   },
   "routes": [
     { "pattern": "hiaskai.com", "custom_domain": true },

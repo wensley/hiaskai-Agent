@@ -202,6 +202,9 @@ export const customModelOptions = (models: CustomModel[]): CustomModelOption[] =
     hint: `${model.model} · ${model.baseUrl}`,
   }))
 
+/** 跨域失败时抛出的哨兵值，界面据此换成「改成站点中转」的提示 */
+export const CORS_HINT = 'cors-blocked'
+
 /** 打通性测试：GET /models 只验证鉴权与地址，不产生推理费用 */
 export const probeCustomModel = async (model: CustomModel, fallbackApiKey: string | null) => {
   // 站点统一中转或本机网关可能不需要 Key，这里不再强制
@@ -209,16 +212,25 @@ export const probeCustomModel = async (model: CustomModel, fallbackApiKey: strin
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 10_000)
   try {
-    const response = await fetch(modelsUrl(model.baseUrl), {
-      headers: {
-        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-        ...(model.protocol === 'anthropic'
-          ? { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }
-          : {}),
-        Accept: 'application/json',
-      },
-      signal: controller.signal,
-    })
+    let response: Response
+    try {
+      response = await fetch(modelsUrl(model.baseUrl), {
+        headers: {
+          ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+          ...(model.protocol === 'anthropic'
+            ? { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }
+            : {}),
+          Accept: 'application/json',
+        },
+        signal: controller.signal,
+      })
+    } catch (error) {
+      // fetch 抛 TypeError 基本都是跨域被拦或地址不可达，交给界面给出可执行的提示
+      if (error instanceof TypeError) {
+        throw new Error(CORS_HINT)
+      }
+      throw error
+    }
     if (!response.ok) {
       const text = await response.text().catch(() => '')
       throw new Error(`HTTP ${response.status}${text ? `: ${text.slice(0, 200)}` : ''}`)

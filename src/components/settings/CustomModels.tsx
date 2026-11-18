@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { IconEditOutline16, IconTrashOutline16 } from '../base/icons.js'
 import {
+  CORS_HINT,
   DEFAULT_CONTEXT_WINDOW,
   MAX_CONTEXT_WINDOW,
   MIN_CONTEXT_WINDOW,
@@ -168,10 +169,12 @@ const CustomModelEditor = ({
       const count = await probeCustomModel(probe, useSettings.getState().apiKey)
       setStatus({ error: false, text: t('settingsModelsTestOk', { count }) })
     } catch (error) {
+      const raw = error instanceof Error ? error.message : String(error)
       setStatus({
         error: true,
         text: t('settingsModelsTestFailed', {
-          message: error instanceof Error ? error.message : String(error),
+          // fetch 直接失败多半是服务商没开跨域，换成能指导用户的说法
+          message: raw === CORS_HINT ? t('settingsModelsCorsHint') : raw,
         }),
       })
     } finally {
