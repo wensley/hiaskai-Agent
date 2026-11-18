@@ -1,11 +1,17 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "deepseek-agent",
+  "main": "./src/worker.ts",
   "compatibility_date": "2026-11-01",
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "html_handling": "auto-trailing-slash"
+    "html_handling": "auto-trailing-slash",
+    "run_worker_first": true
+  },
+  "vars": {
+    "AMD_API_ORIGIN": "https://developer.amd.com.cn/radeon/api/v1"
   },
   "routes": [
     { "pattern": "hiaskai.com", "custom_domain": true },

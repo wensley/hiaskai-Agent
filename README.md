@@ -87,6 +87,22 @@ localStorage.setItem('chat-agent:mock-agent', 'true')
 
 已知边界：附件上传、联网搜索与自动标题依赖 DeepSeek 内置接口，自定义模型下不可用；子 Agent 固定走内置接口。
 
+### 通过站点中转使用（免 CORS、不暴露 Key）
+
+浏览器直连要求服务商允许跨域。像 `developer.amd.com.cn` 这类没有 CORS 头的接口，可以用仓库自带的 Worker 转发：
+
+- 路由：`/api/amd/*` → `AMD_API_ORIGIN`（默认 `https://developer.amd.com.cn/radeon/api/v1`），SSE 原样透传
+- Key 只存在 Worker secret：`npx wrangler secret put AMD_API_KEY`
+- 只有同源请求放行，浏览器里不出现 Key
+
+在「模型接入」里这样填即可：
+
+| 协议 | 模型 ID | 接口地址 | API Key | 上下文窗口 |
+| --- | --- | --- | --- | --- |
+| OpenAI 兼容 | `DeepSeek-V4.1-Flash` | `https://hiaskai.com/api/amd` | 留空 | `1048576` |
+
+其他不需要鉴权的本机网关（Ollama、vLLM）同样留空 Key 即可。
+
 ## 部署到 GitHub Pages
 
 仓库自带 [`.github/workflows/pages.yml`](.github/workflows/pages.yml)：推送到 `main` 后自动执行类型检查、lint、构建并发布到 Pages。

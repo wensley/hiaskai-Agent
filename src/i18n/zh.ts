@@ -176,7 +176,7 @@ export const zh = {
   settingsModelsBaseUrlHint: '填到 /v1 这一级即可，例如 https://api.openai.com/v1。',
   settingsModelsBaseUrlPlaceholder: 'https://api.openai.com/v1',
   settingsModelsApiKey: 'API Key',
-  settingsModelsApiKeyHint: '留空则复用「数据管理」里保存的 DeepSeek Key。',
+  settingsModelsApiKeyHint: '留空则复用全局 Key；接本机网关或站点统一中转时可以完全留空。',
   settingsModelsContextWindow: '上下文窗口',
   settingsModelsContextWindowHint: '用于右下角占用圆环的折算，不清楚就保持默认。',
   settingsModelsTools: '工具调用',

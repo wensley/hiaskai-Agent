@@ -196,7 +196,8 @@ const post = async (target: ModelTarget, payload: unknown, signal: AbortSignal) 
     return await fetch(chatCompletionsUrl(target.baseUrl), {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${target.apiKey}`,
+        // 留空 Key 的场景（本机网关、站点统一中转）不带鉴权头，由服务端自己处理
+        ...(target.apiKey ? { Authorization: `Bearer ${target.apiKey}` } : {}),
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
       },
@@ -242,9 +243,6 @@ export async function* streamOpenAI(
   body: CreateMessageRequest,
   signal: AbortSignal
 ): AsyncGenerator<MessageStreamEvent> {
-  if (!target.apiKey) {
-    throw new ApiError('http', 'missing api key', 401)
-  }
   let response = await post(target, buildOpenAIRequest(target, body), signal)
   if (!response.ok) {
     const error = await readError(response)

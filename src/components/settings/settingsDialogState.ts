@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { resolveModelTarget } from '../../services/api/providers.js'
+import { isCustomSelection, resolveModelTarget } from '../../services/api/providers.js'
 import { useSettings } from '../../services/settings.js'
 
 /** 设置弹窗的分组：通用设置 / 自定义模型 / Agent 运行时 / 数据管理 */
@@ -16,10 +16,14 @@ export const openSettings = (section: SettingsSection) =>
 
 export const closeSettings = () => useSettingsDialog.setState({ open: false })
 
-/** 当前选择的模型是否已有可用凭据：内置 Key，或自定义模型自带的 Key */
+/** 当前选择的模型是否已有可用凭据：内置 Key、自定义模型自带的 Key，或指向无需鉴权的中转 */
 const hasUsableKey = () => {
   const { apiKey, model, customModels } = useSettings.getState()
   if (apiKey) {
+    return true
+  }
+  if (isCustomSelection(model)) {
+    // 自定义模型可能指向同源中转或本机网关，Key 为空也放行，服务端会自己返回 401
     return true
   }
   return Boolean(resolveModelTarget(model, apiKey, customModels).apiKey)

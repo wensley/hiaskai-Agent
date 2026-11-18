@@ -38,6 +38,20 @@ pnpm deploy -- --dry-run   # 只校验不推送
 
 `public/_headers` 里放了响应头：安全头 + `/static/*` 一年强缓存 + `/index.html` 回源校验。
 
+## Worker 转发路由
+
+站点现在是一个带脚本的 Worker（`src/worker.ts`）：`/api/amd/*` 转发到 `AMD_API_ORIGIN`，其余路径交给 Static Assets。
+
+```sh
+npx wrangler secret put AMD_API_KEY     # 上游 Key，只在 Worker 里使用
+npx wrangler deploy
+```
+
+- 上游没有 CORS 头也能用：浏览器只请求同源 `/api/amd/...`
+- Key 不会下发到前端；只有 `Origin` 与站点同源的请求放行
+- SSE 直接透传上游 `response.body`，不做缓冲，首字延迟不受影响
+- 想换供应商只改 `wrangler.jsonc` 里的 `AMD_API_ORIGIN`（或再加一条 `/api/xxx` 路由）
+
 ## 自定义模型与 CORS
 
 「模型接入」里添加的第三方模型由浏览器**直连**服务商，不经过 Worker，所以：

@@ -185,7 +185,8 @@ export const en = {
   settingsModelsBaseUrlHint: 'Point to the /v1 root, e.g. https://api.openai.com/v1.',
   settingsModelsBaseUrlPlaceholder: 'https://api.openai.com/v1',
   settingsModelsApiKey: 'API Key',
-  settingsModelsApiKeyHint: 'Leave empty to reuse the DeepSeek key saved under Data.',
+  settingsModelsApiKeyHint:
+    'Leave empty to reuse the global key, or when the endpoint is a local gateway or site proxy.',
   settingsModelsContextWindow: 'Context window',
   settingsModelsContextWindowHint: 'Used for the context ring; keep the default if unsure.',
   settingsModelsTools: 'Tool calling',

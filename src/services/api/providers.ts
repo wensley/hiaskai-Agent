@@ -204,16 +204,14 @@ export const customModelOptions = (models: CustomModel[]): CustomModelOption[] =
 
 /** 打通性测试：GET /models 只验证鉴权与地址，不产生推理费用 */
 export const probeCustomModel = async (model: CustomModel, fallbackApiKey: string | null) => {
+  // 站点统一中转或本机网关可能不需要 Key，这里不再强制
   const apiKey = model.apiKey || (fallbackApiKey ?? '')
-  if (!apiKey) {
-    throw new Error('missing api key')
-  }
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 10_000)
   try {
     const response = await fetch(modelsUrl(model.baseUrl), {
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
         ...(model.protocol === 'anthropic'
           ? { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }
           : {}),
