@@ -15,7 +15,8 @@ import {
   readCachedModels,
   type ModelOption,
 } from '../../services/api/models.js'
-import { setModel, useSettings } from '../../services/settings.js'
+import { setModel, updateCustomModel, useSettings } from '../../services/settings.js'
+import { customSelection, probeCustomModel } from '../../services/api/providers.js'
 import { openSettings } from '../settings/settingsDialogState.js'
 import { showToast } from '../base/toastState.js'
 import { useTranslate } from '../../i18n/index.js'
@@ -67,28 +68,52 @@ export const ModelPicker = () => {
 
   const refresh = useCallback(
     async (silent = false) => {
-      const apiKey = useSettings.getState().apiKey ?? ''
-      if (!apiKey) {
-        if (!silent) {
-          showToast(t('modelFetchFailed'))
-        }
-        return
-      }
+      const settings = useSettings.getState()
+      const apiKey = settings.apiKey ?? ''
+      // 选中的是自定义模型时刷新它自己的接口，而不是内置 DeepSeek
+      const selected = settings.customModels.find(
+        (item) => customSelection(item.uid) === settings.model
+      )
       setLoading(true)
       try {
+        if (selected) {
+          const { models: list } = await probeCustomModel(selected, apiKey)
+          if (list.length === 0) {
+            throw new Error('empty model list')
+          }
+          // 名称还是模型 ID 的条目，用接口给的显示名补全
+          for (const item of list) {
+            const saved = settings.customModels.find((entry) => entry.model === item.id)
+            if (saved && saved.label === saved.model && item.label !== item.id) {
+              updateCustomModel(saved.uid, { label: item.label })
+            }
+          }
+          setSource('remote')
+          if (!silent) {
+            showToast({ key: 'modelRefreshCustomOk', params: { count: list.length } })
+          }
+          return
+        }
+        if (!apiKey) {
+          setSource(readCachedModels() ? 'cache' : 'builtin')
+          if (!silent) {
+            showToast({ key: 'modelRefreshNoKey' })
+          }
+          return
+        }
         const remote = await fetchRemoteModels(apiKey)
         setModels(mergeModels(remote, customModelOptionList()))
         setSource('remote')
       } catch {
         setSource(readCachedModels() ? 'cache' : 'builtin')
         if (!silent) {
-          showToast(t('modelFetchFailed'))
+          showToast({ key: 'modelFetchFailed' })
         }
       } finally {
         setLoading(false)
       }
     },
-    [t]
+    []
   )
 
   // 首次打开时自动拉取一次；演示模式没有真实 Key，直接使用内置列表
@@ -111,6 +136,9 @@ export const ModelPicker = () => {
       )
     )
   }, [customModels])
+
+  /** 当前选中的是自定义模型时，刷新动作改为刷新它的接口 */
+  const selectedCustom = customModels.find((item) => customSelection(item.uid) === model)
 
   const sourceText = useMemo(() => {
     if (loading) {
@@ -161,7 +189,11 @@ export const ModelPicker = () => {
                   onClick={() => void refresh()}
                 >
                   <IconRefreshOutline16 />
-                  {loading ? t('modelRefreshing') : t('modelRemoteFetch')}
+                  {loading
+                    ? t('modelRefreshing')
+                    : selectedCustom
+                      ? t('modelRefreshCustom')
+                      : t('modelRemoteFetch')}
                 </button>
                 <button
                   type="button"
