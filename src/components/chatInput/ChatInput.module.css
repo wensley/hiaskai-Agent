@@ -280,6 +280,43 @@ body[data-ds-dark-theme] .wrapper[data-glass].home {
   max-height: 336px;
 }
 
+/* 手机窄屏：一行放不下「模型 + 思考 + 搜索」和右侧按钮，直接分成两行，
+   避免因为字体宽度差异互相压住（iPhone 16 的 393px 就卡在这个临界点） */
+@media (max-width: 400px) {
+  .functionRow {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .toggles {
+    flex: 1 0 100%;
+    min-width: 0;
+  }
+
+  .right {
+    flex: 1 0 100%;
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+}
+
+@media not all and (min-width: 560px) {
+  /* 平板竖屏这类中间尺寸仍然单行，但压不下时折行而不是重叠 */
+  .functionRow {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .toggles {
+    flex: 1 1 auto;
+    min-width: min-content;
+  }
+
+  .right {
+    margin-left: auto;
+  }
+}
+
 @media not all and (min-width: 768px) {
   .wrapper {
     flex-shrink: 0;

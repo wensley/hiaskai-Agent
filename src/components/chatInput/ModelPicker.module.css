@@ -57,7 +57,8 @@
 
 @media not all and (min-width: 560px) {
   .trigger {
-    max-width: 132px;
+    /* 手机上要给「深度思考 / 智能搜索」和右侧按钮留位置，132px 会把整行挤出去 */
+    max-width: 112px;
     padding: 0 8px 0 10px;
   }
 
