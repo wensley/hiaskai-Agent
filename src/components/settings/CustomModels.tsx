@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { IconEditOutline16, IconTrashOutline16 } from '../base/icons.js'
 import {
   CORS_HINT,
@@ -9,6 +9,7 @@ import {
   normalizeBaseUrl,
   probeCustomModel,
   type CustomModel,
+  type ProbeModel,
   type ProviderProtocol,
 } from '../../services/api/providers.js'
 import {
@@ -134,11 +135,55 @@ const CustomModelEditor = ({
   const [draft, setDraft] = useState<Draft>(() => toDraft(model))
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<{ error: boolean; text: string } | null>(null)
+  /** 接口返回的模型列表，选中即可填入模型 ID */
+  const [remote, setRemote] = useState<ProbeModel[]>([])
   const patch = (next: Partial<Draft>) => setDraft((current) => ({ ...current, ...next }))
 
   const model_ = draft.model.trim()
   const baseUrl = normalizeBaseUrl(draft.baseUrl)
-  const valid = model_ !== '' && /^https?:\/\//i.test(baseUrl)
+  const urlValid = /^https?:\/\//i.test(baseUrl)
+  const valid = model_ !== '' && urlValid
+
+  /** 拉取接口的模型列表；silent 用于打开弹窗时自动预取，失败不打扰 */
+  const loadModels = async (silent: boolean) => {
+    if (!urlValid || busy) {
+      return
+    }
+    setBusy(true)
+    if (!silent) {
+      setStatus(null)
+    }
+    try {
+      const probe = normalizeBaseModel(draft, model_ || 'probe', baseUrl)
+      const result = await probeCustomModel(probe, useSettings.getState().apiKey)
+      setRemote(result.models)
+      if (!silent) {
+        setStatus({ error: false, text: t('settingsModelsTestOk', { count: result.count }) })
+      }
+    } catch (error) {
+      const raw = error instanceof Error ? error.message : String(error)
+      if (!silent) {
+        setStatus({
+          error: true,
+          text: t('settingsModelsTestFailed', {
+            // fetch 直接失败多半是服务商没开跨域，换成能指导用户的说法
+            message: raw === CORS_HINT ? t('settingsModelsCorsHint') : raw,
+          }),
+        })
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // 已有地址时先预取一次，打开弹窗就能从列表里挑
+  useEffect(() => {
+    if (/^https?:\/\//i.test(normalizeBaseUrl(toDraft(model).baseUrl))) {
+      void loadModels(true)
+    }
+    // 只在挂载时跑一次
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const save = () => {
     if (!valid) {
@@ -158,29 +203,7 @@ const CustomModelEditor = ({
     onClose()
   }
 
-  const test = async () => {
-    if (!valid || busy) {
-      return
-    }
-    setBusy(true)
-    setStatus(null)
-    try {
-      const probe = normalizeBaseModel(draft, model_, baseUrl)
-      const count = await probeCustomModel(probe, useSettings.getState().apiKey)
-      setStatus({ error: false, text: t('settingsModelsTestOk', { count }) })
-    } catch (error) {
-      const raw = error instanceof Error ? error.message : String(error)
-      setStatus({
-        error: true,
-        text: t('settingsModelsTestFailed', {
-          // fetch 直接失败多半是服务商没开跨域，换成能指导用户的说法
-          message: raw === CORS_HINT ? t('settingsModelsCorsHint') : raw,
-        }),
-      })
-    } finally {
-      setBusy(false)
-    }
-  }
+  const test = () => loadModels(false)
 
   return (
     <Modal
@@ -227,6 +250,31 @@ const CustomModelEditor = ({
             onChange={(event) => patch({ model: event.target.value })}
           />
         </Field>
+        {remote.length > 0 ? (
+          <Field
+            label={t('settingsModelsPick')}
+            hint={t('settingsModelsPickHint', { count: remote.length })}
+            plain
+          >
+            <Select
+              ariaLabel={t('settingsModelsPick')}
+              value={remote.some((item) => item.id === draft.model) ? draft.model : ''}
+              placeholder={t('settingsModelsPickPlaceholder')}
+              options={remote.map((item) => ({
+                value: item.id,
+                label: item.label === item.id ? item.id : `${item.label}（${item.id}）`,
+              }))}
+              onChange={(id) => {
+                const found = remote.find((item) => item.id === id)
+                patch({
+                  model: id,
+                  // 名称留空时顺手用接口给的显示名填上
+                  ...(draft.label.trim() ? {} : { label: found?.label ?? id }),
+                })
+              }}
+            />
+          </Field>
+        ) : null}
         <Field label={t('settingsModelsBaseUrl')} hint={t('settingsModelsBaseUrlHint')}>
           <input
             className={styles.editorInput}

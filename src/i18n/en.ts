@@ -194,6 +194,9 @@ export const en = {
   settingsModelsReasoning: 'Reasoning effort',
   settingsModelsReasoningHint:
     'Sends reasoning_effort with each request; only supported models honour it.',
+  settingsModelsPick: 'Model list',
+  settingsModelsPickHint: '{count} models received — picking one fills the model ID',
+  settingsModelsPickPlaceholder: 'Pick a model from the endpoint',
   settingsModelsTest: 'Test connection',
   settingsModelsTesting: 'Testing…',
   settingsModelsTestOk: 'Connected, {count} models returned',

@@ -205,6 +205,42 @@ export const customModelOptions = (models: CustomModel[]): CustomModelOption[] =
 /** 跨域失败时抛出的哨兵值，界面据此换成「改成站点中转」的提示 */
 export const CORS_HINT = 'cors-blocked'
 
+/** 从 /models 拿到的条目：id 用来下发，label 用来展示 */
+export type ProbeModel = { id: string; label: string }
+
+/** 兼容 OpenAI 的 {data:[{id, display_name}]}、Anthropic 的 {data:[{id,name}]} 与纯字符串数组 */
+const parseProbeModels = (list: unknown[]): { count: number; models: ProbeModel[] } => {
+  const seen = new Set<string>()
+  const models: ProbeModel[] = []
+  for (const item of list) {
+    if (typeof item === 'string') {
+      if (!seen.has(item)) {
+        seen.add(item)
+        models.push({ id: item, label: item })
+      }
+      continue
+    }
+    if (typeof item !== 'object' || item === null) {
+      continue
+    }
+    const entry = item as Record<string, unknown>
+    const id =
+      typeof entry.id === 'string' ? entry.id : typeof entry.name === 'string' ? entry.name : ''
+    if (!id || seen.has(id)) {
+      continue
+    }
+    seen.add(id)
+    const label =
+      (typeof entry.display_name === 'string' && entry.display_name) ||
+      (typeof entry.displayName === 'string' && entry.displayName) ||
+      (typeof entry.name === 'string' && entry.name) ||
+      id
+    models.push({ id, label })
+  }
+  models.sort((a, b) => a.id.localeCompare(b.id))
+  return { count: models.length, models }
+}
+
 /** 打通性测试：GET /models 只验证鉴权与地址，不产生推理费用 */
 export const probeCustomModel = async (model: CustomModel, fallbackApiKey: string | null) => {
   // 站点统一中转或本机网关可能不需要 Key，这里不再强制
@@ -241,7 +277,7 @@ export const probeCustomModel = async (model: CustomModel, fallbackApiKey: strin
         ? ((payload as Record<string, unknown>).data ??
           (payload as Record<string, unknown>).models)
         : null
-    return Array.isArray(list) ? list.length : 0
+    return Array.isArray(list) ? parseProbeModels(list) : { count: 0, models: [] }
   } finally {
     clearTimeout(timer)
   }
