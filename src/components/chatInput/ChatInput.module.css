@@ -353,6 +353,17 @@ body[data-ds-dark-theme] .wrapper[data-glass].home {
   display: none;
 }
 
+/* 手机上「智能搜索」只留图标：文字换成 tooltip / aria-label，给模型与思考强度腾地方 */
+@media not all and (min-width: 560px) {
+  .toggleLabel {
+    display: none;
+  }
+
+  .toggle {
+    padding: 0 10px;
+  }
+}
+
 .toggle {
   display: inline-flex;
   flex-shrink: 0;
