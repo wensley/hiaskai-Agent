@@ -711,9 +711,13 @@ body[data-ds-dark-theme] .slider input[type='range'] {
   justify-content: flex-end;
 }
 
-.fieldControl > input,
-.fieldControl > button {
+.fieldControl > input {
   width: 100%;
+}
+
+/* 开关保持自身尺寸，靠右对齐；下拉允许撑满一行的一半以上即可 */
+.fieldControl > [role='switch'] {
+  flex: 0 0 auto;
 }
 
 .fieldHint {
@@ -786,8 +790,7 @@ body[data-ds-dark-theme] .slider input[type='range'] {
     line-height: 18px;
   }
 
-  .fieldControl > input,
-  .fieldControl > button {
+  .fieldControl > input {
     width: 100%;
   }
 }

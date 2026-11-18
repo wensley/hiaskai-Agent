@@ -207,7 +207,7 @@ const CustomModelEditor = ({
             onChange={(event) => patch({ label: event.target.value })}
           />
         </Field>
-        <Field label={t('settingsModelsProtocol')} hint={t('settingsModelsProtocolHint')}>
+        <Field label={t('settingsModelsProtocol')} hint={t('settingsModelsProtocolHint')} plain>
           <Select
             ariaLabel={t('settingsModelsProtocol')}
             value={draft.protocol}
@@ -258,14 +258,14 @@ const CustomModelEditor = ({
             onChange={(event) => patch({ contextWindow: Number(event.target.value) })}
           />
         </Field>
-        <Field label={t('settingsModelsTools')} hint={t('settingsModelsToolsHint')}>
+        <Field label={t('settingsModelsTools')} hint={t('settingsModelsToolsHint')} plain>
           <Switch
             checked={draft.tools}
             label={t('settingsModelsTools')}
             onChange={(tools) => patch({ tools })}
           />
         </Field>
-        <Field label={t('settingsModelsReasoning')} hint={t('settingsModelsReasoningHint')}>
+        <Field label={t('settingsModelsReasoning')} hint={t('settingsModelsReasoningHint')} plain>
           <Switch
             checked={draft.reasoning}
             label={t('settingsModelsReasoning')}
@@ -298,18 +298,32 @@ const normalizeBaseModel = (
   ),
 })
 
+/**
+ * 一行表单：左边标签、右边控件、下面说明。
+ * plain 用于 button 类控件（开关、下拉）：它们被 <label> 包住时，
+ * 点击会被 label 再转发一次，表现为「点了没反应」。
+ */
 const Field = ({
   label,
   hint,
   children,
+  plain = false,
 }: {
   label: string
   hint?: string
   children: ReactNode
-}) => (
-  <label className={styles.field}>
-    <span className={styles.fieldLabel}>{label}</span>
-    <span className={styles.fieldControl}>{children}</span>
-    {hint ? <span className={styles.fieldHint}>{hint}</span> : null}
-  </label>
-)
+  plain?: boolean
+}) => {
+  const content = (
+    <>
+      <span className={styles.fieldLabel}>{label}</span>
+      <span className={styles.fieldControl}>{children}</span>
+      {hint ? <span className={styles.fieldHint}>{hint}</span> : null}
+    </>
+  )
+  return plain ? (
+    <div className={styles.field}>{content}</div>
+  ) : (
+    <label className={styles.field}>{content}</label>
+  )
+}
