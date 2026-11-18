@@ -146,12 +146,18 @@ export const useAnchoredPosition = <T extends HTMLElement, F extends HTMLElement
     const available = Math.max(0, resolved === 'top' ? spaceAbove : spaceBelow)
     // 内容比可用空间小时按内容收口，避免浮层留出多余空白
     const height = Math.max(40, Math.min(maxHeight, available, floating.scrollHeight + 2))
+    /*
+     * 优先与触发元素的右边缘对齐；但如果浮层比「触发器右侧到屏幕右边缘」更宽，
+     * 右对齐会把左侧推出屏幕（手机上模型选择面板就是这么飞出去的）。
+     * 这里统一按左边缘收口，保证浮层始终留在视口内。
+     */
+    const width = floating.getBoundingClientRect().width
     applyPosition({
       top:
         resolved === 'top'
           ? Math.max(VIEWPORT_PADDING, rect.top - offset - height)
           : rect.bottom + offset,
-      right: Math.max(VIEWPORT_PADDING, window.innerWidth - rect.right),
+      left: clampLeft(rect.right - width, width),
       maxHeight: height,
     })
   }, [align, alignOffset, applyPosition, floatingRef, getAnchor, maxHeight, minSpace, offset, side])
