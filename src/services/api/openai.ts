@@ -23,8 +23,13 @@ type OpenAIToolCall = {
   function: { name: string; arguments: string }
 }
 
+type OpenAIContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string } }
+
 type OpenAIMessage =
-  | { role: 'system' | 'user'; content: string }
+  | { role: 'system'; content: string }
+  | { role: 'user'; content: string | OpenAIContentPart[] }
   | { role: 'assistant'; content: string | null; tool_calls?: OpenAIToolCall[] }
   | { role: 'tool'; tool_call_id: string; content: string }
 
@@ -85,6 +90,7 @@ export const toOpenAIMessages = (body: CreateMessageRequest): OpenAIMessage[] =>
         continue
       }
       const texts: string[] = []
+      const images: string[] = []
       let dropped = false
       for (const block of message.content) {
         if (block.type === 'tool_result') {
@@ -95,13 +101,23 @@ export const toOpenAIMessages = (body: CreateMessageRequest): OpenAIMessage[] =>
           })
         } else if (block.type === 'text') {
           texts.push(block.text)
+        } else if (block.type === 'image' && block.source.type === 'base64') {
+          // 自定义模型没有 Files API：本地图片以 data URL 内联
+          images.push(`data:${block.source.media_type};base64,${block.source.data}`)
         } else {
-          // 附件以 DeepSeek 的 file_id 引用，第三方接口无法解析，只能省略
           dropped = true
         }
       }
       const text = texts.join('\n\n').trim()
-      if (text) {
+      if (images.length > 0) {
+        messages.push({
+          role: 'user',
+          content: [
+            ...(text ? [{ type: 'text' as const, text }] : []),
+            ...images.map((url) => ({ type: 'image_url' as const, image_url: { url } })),
+          ],
+        })
+      } else if (text) {
         messages.push({ role: 'user', content: text })
       } else if (dropped) {
         messages.push({ role: 'user', content: '（附件内容无法传给该模型，请改用文字描述）' })

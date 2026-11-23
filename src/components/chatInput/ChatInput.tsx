@@ -23,6 +23,7 @@ import { stopReadAloud } from '../../services/speech/readAloud.js'
 import { IconButton } from '../base/IconButton.js'
 import { Tooltip } from '../base/Tooltip.js'
 import { ensureApiKey, ensureUploadKey } from '../settings/settingsDialogState.js'
+import { isCustomSelection } from '../../services/api/providers.js'
 import { DragMask, useFileDrop } from './DragMask.js'
 import { showToast } from '../base/toastState.js'
 import { ACCEPT, useUploads } from '../../services/attachments.js'
@@ -49,7 +50,11 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
   const draft = useDrafts((state) => state.drafts.get(sessionId) ?? EMPTY_DRAFT)
   const { text, attachments } = draft
   const setText = (value: string) => setDraftText(sessionId, value)
-  const draftReady = useUploads((state) => prepareDraftMessage(draft, state.tasks) !== null)
+  /** 自定义模型没有 Files API：图片就地内联，不等待上传 */
+  const customModel = useSettings((state) => isCustomSelection(state.model))
+  const draftReady = useUploads(
+    (state) => prepareDraftMessage(draft, state.tasks, customModel) !== null
+  )
   const streaming = useChatStore(
     (state) => sessionId !== null && Object.hasOwn(state.streaming, sessionId)
   )
@@ -81,6 +86,11 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
 
   const acceptFiles = (files: File[]) => {
     if (files.length === 0 || useChatStore.getState().importingHistory || !ensureUploadKey()) {
+      return
+    }
+    // 自定义模型只能内联图片，文档没有可用的解析通道
+    if (customModel && files.some((file) => !file.type.startsWith('image/'))) {
+      showToast({ key: 'uploadImageOnlyForCustom' })
       return
     }
     const error = addDraftFiles(sessionId, files, useSettings.getState().apiKey ?? '')
@@ -141,7 +151,7 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
     if (
       useChatStore.getState().importingHistory ||
       voice.status !== 'idle' ||
-      !prepareDraftMessage(getDraft(sessionId), useUploads.getState().tasks)
+      !prepareDraftMessage(getDraft(sessionId), useUploads.getState().tasks, customModel)
     ) {
       return
     }

@@ -39,10 +39,13 @@ export const ensureApiKey = () => {
   return false
 }
 
-/** 附件走 DeepSeek Files API，自定义模型的 Key 不能用来上传，仍然要求内置 Key */
+/**
+ * 附件：内置模型必须走 DeepSeek Files API 上传；自定义模型则把图片就地转成 data URL，
+ * 所以只有「没有内置 Key 且当前不是自定义模型」时才提示去填 Key。
+ */
 export const ensureUploadKey = () => {
-  const { apiKey, mockAgent } = useSettings.getState()
-  if (apiKey || mockAgent) {
+  const { apiKey, mockAgent, model } = useSettings.getState()
+  if (apiKey || mockAgent || isCustomSelection(model)) {
     return true
   }
   openSettings('data')

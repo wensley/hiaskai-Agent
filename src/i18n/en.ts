@@ -136,6 +136,7 @@ export const en = {
   historyDeleted: 'Successfully deleted.',
   historyDeleteFailed: 'Failed to delete chats. Please try again.',
   upload: 'Upload',
+  uploadImageOnlyForCustom: 'Custom models only accept images; switch to a built-in model for documents.',
   uploadUnsupportedFormat:
     'The selected files include unsupported formats. Please convert them and try again. Supported: PDF, DOC, XLSX, PPT, images, text, code, and more.',
   uploadFileStatusFailed: 'Upload failed',

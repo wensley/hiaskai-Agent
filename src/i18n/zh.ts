@@ -128,6 +128,7 @@ export const zh = {
   historyDeleted: '删除成功',
   historyDeleteFailed: '删除失败，请重试',
   upload: '上传',
+  uploadImageOnlyForCustom: '自定义模型只能解析图片附件；文档请切回内置模型再上传',
   uploadUnsupportedFormat:
     '上传的文件包含暂未支持的文件格式，请转换文件格式后重试。支持 PDF、DOC、XLSX、PPT、图片、文本、代码等。',
   uploadFileStatusFailed: '上传失败',

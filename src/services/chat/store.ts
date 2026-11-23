@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { createId } from '../../utils/id.js'
 import { ApiError, streamMessage } from '../api/client.js'
-import { resolveModelTarget } from '../api/providers.js'
+import { isCustomSelection, resolveModelTarget } from '../api/providers.js'
 import type { ChatModel, CreateMessageRequest, RequestTool } from '../api/types.js'
 import { extractFileIds, getFileErrorCode, isRetryableApiError } from '../api/errors.js'
 import { cancelUpload, describeUploadError, uploadAttachment, useUploads } from '../attachments.js'
@@ -33,6 +33,7 @@ import {
   getContextRounds,
   settleReply,
   toRequestMessages,
+  type InlineImages,
 } from './reply.js'
 import {
   toSessionSummary,
@@ -583,7 +584,11 @@ export const sendMessage = (targetSessionId: string | null) => {
   if (get().importingHistory || !get().ready) {
     return false
   }
-  const prepared = prepareDraftMessage(getDraft(targetSessionId), useUploads.getState().tasks)
+  const prepared = prepareDraftMessage(
+    getDraft(targetSessionId),
+    useUploads.getState().tasks,
+    isCustomSelection(useSettings.getState().model)
+  )
   if (!prepared) {
     return false
   }
@@ -841,6 +846,30 @@ const refreshRequest = (sessionId: string, request: Request): Request => {
   }
 }
 
+/** 自定义模型没有 Files API：把本地图片读成 base64，随请求一起内联发出去 */
+const collectInlineImages = async (files: FileAttachment[]): Promise<InlineImages | undefined> => {
+  const images: InlineImages = new Map()
+  for (const file of files) {
+    if (!file.isImage) {
+      continue
+    }
+    const blob = await db.loadFile(file.id)
+    if (!blob) {
+      continue
+    }
+    const bytes = new Uint8Array(await blob.arrayBuffer())
+    let binary = ''
+    for (let i = 0; i < bytes.length; i += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+    }
+    images.set(file.id, {
+      mediaType: blob.type || file.mimeType || 'image/png',
+      data: btoa(binary),
+    })
+  }
+  return images.size > 0 ? images : undefined
+}
+
 /**
  * 发送前补齐附件的 serverId。
  * - 本轮提问的附件并行补齐，任一失败则整体失败，已成功的照常写回，重试时复用成功结果；
@@ -1021,6 +1050,10 @@ const streamReply = async (sessionId: string, initial: AssistantMessage, request
       settings.apiKey,
       settings.customModels
     )
+    // 自定义模型不走 Files API：本轮图片先读成本地 base64，后续每轮复用
+    const inlineImages = target.builtin
+      ? undefined
+      : await collectInlineImages(request.question.files)
     // 续写使用前缀，不能同时跑工具循环；关闭 agent 时退化为普通聊天。
     const agentEnabled = settings.agentEnabled && !request.prefix
     // 关掉「最大步数」后不设上限，交给用户自己盯；打开时按设置值收口
@@ -1062,7 +1095,9 @@ const streamReply = async (sessionId: string, initial: AssistantMessage, request
             initial.thinking ?? false,
             latestReminder,
             // 工具轮回：把本轮已产生的调用与结果接在提问之后
-            round > 0 ? reply : undefined
+            round > 0 ? reply : undefined,
+            // 自定义模型把本轮图片内联进请求，不需要 Files API
+            inlineImages
           )
           // 自动标题是 DeepSeek 的扩展能力，第三方接口不会回传
           const withTitle = target.builtin && round === 0 && titleRequests.has(controller)

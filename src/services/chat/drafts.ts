@@ -80,7 +80,10 @@ export const addDraftFiles = (
     }
   })
   updateDraft(sessionId, (draft) => ({ ...draft, attachments: [...draft.attachments, ...added] }))
-  added.forEach((attachment) => upload(attachment, apiKey))
+  // 自定义模型没有内置 Key：不发起上传，发送时把图片就地转 data URL
+  if (apiKey) {
+    added.forEach((attachment) => upload(attachment, apiKey))
+  }
   return null
 }
 
@@ -96,7 +99,12 @@ export const retryDraftAttachment = (
 }
 
 /** 发送按钮和实际提交共用规则：有内容，且全部附件已上传成功。 */
-export const prepareDraftMessage = (draft: Draft, tasks: Record<string, UploadTask>) => {
+export const prepareDraftMessage = (
+  draft: Draft,
+  tasks: Record<string, UploadTask>,
+  /** 自定义模型：附件不上传，直接用本地原件内联，只需要图片 */
+  allowLocal = false
+) => {
   const text = draft.text.trim()
   if (!text && draft.attachments.length === 0) {
     return null
@@ -104,6 +112,21 @@ export const prepareDraftMessage = (draft: Draft, tasks: Record<string, UploadTa
   const files: (FileAttachment & { serverId: string; blob: Blob })[] = []
   for (const attachment of draft.attachments) {
     const task = tasks[attachment.id]
+    if (allowLocal) {
+      if (!attachment.isImage) {
+        return null
+      }
+      files.push({
+        id: attachment.id,
+        serverId: '',
+        name: attachment.file.name,
+        size: attachment.file.size,
+        isImage: true,
+        mimeType: resolveMimeType(attachment.file),
+        blob: attachment.file,
+      })
+      continue
+    }
     if (task?.status !== 'done' || !task.serverId) {
       return null
     }
