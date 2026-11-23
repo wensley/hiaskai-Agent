@@ -13,6 +13,7 @@ import { SearchPanel } from '../components/search/SearchPanel.js'
 import { closeSearchPanel } from '../components/search/searchPanelState.js'
 import { SessionView } from '../components/session/SessionView.js'
 import { MobileHeader } from '../components/session/MobileHeader.js'
+import { MatrixOrb } from '../components/base/MatrixOrb.js'
 import { Welcome } from '../components/session/Welcome.js'
 import { ensureApiKey } from '../components/settings/settingsDialogState.js'
 import { SettingsDialog } from '../components/settings/SettingsDialog.js'
@@ -126,6 +127,7 @@ export const App = () => {
               <div className={styles.loadingView}>
                 {isMobile ? <MobileHeader /> : null}
                 <div className={styles.loadingState} role="status" aria-live="polite">
+                  <MatrixOrb state="thinking" size={84} labels={{ thinking: '' }} aria-hidden />
                   <span>
                     {(!ready ? initError : sessionLoadError)
                       ? t(!ready ? 'sessionListLoadFailed' : 'sessionLoadFailed')

@@ -11,6 +11,7 @@ import { useDesktop } from '../../services/agent/desktop/store.js'
 import { useMcp } from '../../services/agent/mcp/store.js'
 import { openAgentPanel } from '../agent/agentPanelState.js'
 import { IconDesktop, IconMcp, IconPuzzle, IconSpark } from '../agent/ToolIcons.js'
+import { FluidOrb } from '../base/FluidOrb.js'
 import styles from './Welcome.module.css'
 
 /** 新对话：问候语 + 能力概览 + 输入框。桌面端居中；移动端输入框吸底 */
@@ -48,6 +49,7 @@ export const Welcome = () => {
     <div className={styles.container}>
       {isMobile ? <MobileHeader /> : null}
       <div className={styles.welcome}>
+        <FluidOrb size={72} color="#4D6BFE" className={styles.orb} aria-hidden />
         <div className={styles.badge}>
           <span className={styles.badgeDot} />
           Agent Runtime
