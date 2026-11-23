@@ -1,3 +1,4 @@
+import { GridReveal } from '../base/GridReveal.js'
 import clsx from 'clsx'
 import { useEffect, useState } from 'react'
 import { useTranslate } from '../../i18n/index.js'
@@ -98,6 +99,8 @@ export const ArtifactPreview = ({
   const [text, setText] = useState<string | null>(null)
   const [url, setUrl] = useState<string | null>(null)
   const [missing, setMissing] = useState(false)
+  /** 图片产物的宽高比，用于让显影网格按原比例铺开 */
+  const [ratio, setRatio] = useState(1)
 
   useEffect(() => {
     let alive = true
@@ -121,12 +124,38 @@ export const ArtifactPreview = ({
     }
   }, [meta.id, meta.kind])
 
+  // 量一次原图尺寸，显影区域才不会被拉成正方形
+  useEffect(() => {
+    if (meta.kind !== 'image' || !url) {
+      return
+    }
+    let alive = true
+    const probe = new Image()
+    probe.onload = () => {
+      if (alive && probe.naturalWidth > 0 && probe.naturalHeight > 0) {
+        setRatio(probe.naturalWidth / probe.naturalHeight)
+      }
+    }
+    probe.src = url
+    return () => {
+      alive = false
+    }
+  }, [meta.kind, url])
+
   const body = () => {
     if (missing) {
       return <div className={styles.empty}>{t('agentArtifactEmpty')}</div>
     }
     if (meta.kind === 'image') {
-      return url ? <img className={styles.image} src={url} alt={meta.name} /> : null
+      // 图片产物：先用点阵网格占位，加载完成后直接在网格上显影
+      return (
+        <GridReveal
+          src={url}
+          alt={meta.name}
+          aspect={ratio}
+          style={{ width: `min(100%, calc(64vh * ${ratio}))`, margin: '0 auto' }}
+        />
+      )
     }
     if (meta.kind === 'html') {
       return url ? (

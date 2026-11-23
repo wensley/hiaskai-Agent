@@ -1,0 +1,45 @@
+.frame {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--dsw-alias-bg-secondary);
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.caption {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+
+.captionText {
+  display: block;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.captionTextShimmer {
+  background-clip: text;
+  color: transparent;
+}
+
+.captionTextPlain {
+  color: rgba(255, 255, 255, 0.75);
+}
