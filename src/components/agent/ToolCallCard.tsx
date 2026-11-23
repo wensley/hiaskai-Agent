@@ -4,6 +4,7 @@ import { useTranslate } from '../../i18n/index.js'
 import type { ToolCallPart, ToolResultPart } from '../../services/chat/types.js'
 import { describeToolInput } from '../../services/agent/runtime.js'
 import { IconChevronDownOutline14, IconChevronRightOutline14 } from '../base/icons.js'
+import { AiStatus } from '../base/AiStatus.js'
 import { toolIcon } from './ToolIcons.js'
 import styles from './ToolCallCard.module.css'
 
@@ -179,8 +180,14 @@ export const ToolCallCard = ({
                 <pre className={styles.code}>{JSON.stringify(call.input, null, 2)}</pre>
               </div>
             ) : null}
-            {call.progress && call.status === 'running' ? (
-              <div className={styles.progress}>{call.progress}</div>
+            {call.status === 'running' ? (
+              <AiStatus
+                state="analyzing"
+                label={t('agentToolRunning', { name: label })}
+                detail={call.progress}
+                timer={false}
+                className={styles.progress}
+              />
             ) : null}
             {content ? (
               <div className={styles.section}>

@@ -1,3 +1,4 @@
+import { GridReveal } from '../base/GridReveal.js'
 import clsx from 'clsx'
 import { useEffect, useState } from 'react'
 import { useTranslate } from '../../i18n/index.js'
@@ -73,7 +74,12 @@ export const MessageFile = ({
           <IconPhotoErrorFill20 />
         </span>
       ) : (
-        <img src={url} alt={file.name} onError={() => setFailedUrl(url)} />
+        <GridReveal
+          src={url}
+          alt={file.name}
+          style={{ width: '100%', height: '100%', aspectRatio: 'auto' }}
+          onError={() => setFailedUrl(url)}
+        />
       )
     ) : null
 
