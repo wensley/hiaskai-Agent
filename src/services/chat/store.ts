@@ -481,6 +481,33 @@ export const newChat = () => {
   }
 }
 
+/**
+ * 导入一段分享来的对话：先落库再切过去。
+ * 保存失败也留在内存里，用户仍能查看，下一次编辑会再存一遍。
+ */
+export const importSharedSession = async (session: Session): Promise<void> => {
+  if (get().importingHistory) {
+    return
+  }
+  set((state) => ({
+    sessions: sortSessions([
+      toSessionSummary(session),
+      ...state.sessions.filter((item) => item.id !== session.id),
+    ]),
+    sessionCache: { ...state.sessionCache, [session.id]: session },
+    activeId: session.id,
+  }))
+  touchSession(session.id)
+  try {
+    await db.saveSession(session)
+  } catch (error) {
+    db.reportStorageError('save session')(error)
+  }
+}
+
+/** 不切换界面的详情读取：分享、导出这类动作需要完整消息，但不想打断当前会话 */
+export const loadSessionDetail = (id: string): Promise<void> => ensureSessionLoaded(id)
+
 export const selectSession = (id: string) => {
   if (!get().importingHistory && get().sessions.some((session) => session.id === id)) {
     touchSession(id)
@@ -650,6 +677,38 @@ export const sendMessage = (targetSessionId: string | null) => {
   }
   persist(sessionId)
   clearSentDraft(targetSessionId)
+  void streamReply(sessionId, reply, { history, question })
+  return true
+}
+
+/**
+ * 以用户身份追加一条消息并立刻请求回答。
+ * 后台任务完成后的「把结果发给 Agent」走这里：用户看得到自己发了什么，也能撤回。
+ */
+export const sendInjectedMessage = (sessionId: string, text: string) => {
+  const content = text.trim()
+  if (!content || get().importingHistory || deletingSessions.has(sessionId)) {
+    return false
+  }
+  const session = getSession(sessionId)
+  if (!session || getStreamController(sessionId)) {
+    return false
+  }
+  const now = Date.now()
+  const history = getVisibleMessages(session)
+  const question: UserMessage = {
+    id: createId(),
+    role: 'user',
+    content,
+    files: [],
+    createdAt: now,
+  }
+  const reply = createReply()
+  updateSession(sessionId, (current) => ({
+    ...appendBranch(current, history.at(-1)?.id ?? null, [question, reply]),
+    updatedAt: now,
+  }))
+  persist(sessionId)
   void streamReply(sessionId, reply, { history, question })
   return true
 }

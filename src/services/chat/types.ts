@@ -104,6 +104,8 @@ export type ToolResultPart = {
   isError?: boolean
   artifacts?: ArtifactMeta[]
   durationMs?: number
+  /** 工具自带的展示用元数据（改动行数、预览文件、任务 id 等），不进入模型上下文 */
+  meta?: Record<string, unknown>
 }
 
 /**

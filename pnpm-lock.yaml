@@ -68,6 +68,9 @@ importers:
       prismjs:
         specifier: 1.30.0
         version: 1.30.0
+      qrcode-generator:
+        specifier: 1.5.0
+        version: 1.5.0
       react:
         specifier: 18.3.1
         version: 18.3.1
@@ -1231,6 +1234,9 @@ packages:
   prismjs@1.30.0:
     resolution: {integrity: sha512-DEvV2ZF2r2/63V+tK8hQvrR2ZGn10srHbXviTlcv7Kpzw8jWiNTqbVgjO3IY8RxrrOUF8VPMQQFysYYYv0YZxw==}
     engines: {node: '>=6'}
+
+  qrcode-generator@1.5.0:
+    resolution: {integrity: sha512-sqo7otiDq5rA4djRkFI7IjLQqxRrLpIou0d3rqr03JJLUGf5raPh91xCio+lFFbQf0SlcVckStz0EmDEX3EeZA==}
 
   react-dom@18.3.1:
     resolution: {integrity: sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==}
@@ -2504,6 +2510,8 @@ snapshots:
       points-on-curve: 0.2.0
 
   prismjs@1.30.0: {}
+
+  qrcode-generator@1.5.0: {}
 
   react-dom@18.3.1(react@18.3.1):
     dependencies:

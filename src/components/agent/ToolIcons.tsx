@@ -168,6 +168,85 @@ export const toolIcon = (name: string, source?: ToolSource) => {
       return <IconGlobe />
     case 'show_widget':
       return <IconSpark />
+    case 'preview_file':
+      return <IconLayers />
+    case 'task_status':
+      return <IconLayers />
+    case 'task_cancel':
+      return <IconBolt />
+    case 'view_image':
+      return <IconEye />
+    case 'workspace_write_file':
+      return <IconPen />
+    case 'calculate':
+    case 'random_number':
+    case 'random_bytes':
+    case 'password_gen':
+      return <IconBolt />
+    case 'hash_text':
+    case 'jwt_decode':
+    case 'base64_codec':
+    case 'url_codec':
+    case 'json_format':
+    case 'json_query':
+    case 'json_diff':
+    case 'diff_text':
+    case 'template_render':
+      return <IconCode />
+    case 'text_stats':
+    case 'word_frequency':
+    case 'dedupe_lines':
+    case 'strip_invisible':
+    case 'regex_extract':
+    case 'text_similarity':
+      return <IconSearch />
+    case 'markdown_toc':
+      return <IconLayers />
+    case 'date_calc':
+    case 'timezone_convert':
+    case 'cron_next':
+      return <IconClock />
+    case 'csv_to_json':
+    case 'json_to_csv':
+      return <IconDatabase />
+    case 'qrcode_generate':
+      return <IconImage />
+    case 'create_tool':
+    case 'run_tool_chain':
+      return <IconBolt />
+    case 'manage_goals':
+      return <IconTarget />
+    case 'desk_glob':
+    case 'desk_tree':
+      return <IconFolder />
+    case 'desk_diff':
+    case 'desk_calculate':
+    case 'desk_codec':
+    case 'desk_password':
+    case 'desk_markdown':
+      return <IconCode />
+    case 'desk_time':
+      return <IconClock />
+    case 'desk_regex':
+    case 'desk_dupes':
+    case 'desk_similarity':
+      return <IconSearch />
+    case 'desk_csv':
+    case 'desk_pdf':
+    case 'desk_office':
+      return <IconFile />
+    case 'desk_sqlite':
+      return <IconDatabase />
+    case 'desk_net':
+      return <IconGlobe />
+    case 'desk_download':
+      return <IconDownload />
+    case 'desk_image':
+    case 'desk_qr':
+      return <IconImage />
+    case 'browser_screenshot':
+    case 'desk_screenshot':
+      return <IconCamera />
     case 'spawn_subagent':
       return <IconSpark />
     default:
@@ -199,3 +278,74 @@ export const toolIcon = (name: string, source?: ToolSource) => {
       return <IconSpark />
   }
 }
+
+
+export const IconSearch = (props: IconProps) => (
+  <svg {...base(props)}>
+    <circle cx="7.2" cy="7.2" r="4.4" />
+    <path d="m10.6 10.6 3 3" />
+  </svg>
+)
+
+export const IconDatabase = (props: IconProps) => (
+  <svg {...base(props)}>
+    <ellipse cx="8" cy="4.2" rx="4.8" ry="1.9" />
+    <path d="M3.2 4.2v7.6c0 1 2.1 1.9 4.8 1.9s4.8-.9 4.8-1.9V4.2M3.2 8c0 1 2.1 1.9 4.8 1.9s4.8-.9 4.8-1.9" />
+  </svg>
+)
+
+export const IconDownload = (props: IconProps) => (
+  <svg {...base(props)}>
+    <path d="M8 2.2v7.2M5.4 7.4 8 10l2.6-2.6M3 12.6h10" />
+  </svg>
+)
+
+export const IconImage = (props: IconProps) => (
+  <svg {...base(props)}>
+    <rect x="2.2" y="3.2" width="11.6" height="9.6" rx="1.4" />
+    <circle cx="5.8" cy="6.4" r="1.1" />
+    <path d="m3.4 11.4 3.2-3 2.4 2.2 1.8-1.6 2.8 2.4" />
+  </svg>
+)
+
+export const IconPen = (props: IconProps) => (
+  <svg {...base(props)}>
+    <path d="M2.8 13.2h2.6L12.8 5.8a1.6 1.6 0 0 0 0-2.2l-.4-.4a1.6 1.6 0 0 0-2.2 0L2.8 10.6v2.6Z" />
+    <path d="M9.4 4.6l2 2" />
+  </svg>
+)
+
+export const IconEye = (props: IconProps) => (
+  <svg {...base(props)}>
+    <path d="M1.6 8S3.9 4 8 4s6.4 4 6.4 4-2.3 4-6.4 4S1.6 8 1.6 8Z" />
+    <circle cx="8" cy="8" r="1.7" />
+  </svg>
+)
+
+export const IconLayers = (props: IconProps) => (
+  <svg {...base(props)}>
+    <path d="M8 2 14 5.2 8 8.4 2 5.2 8 2Z" />
+    <path d="M2 8.4 8 11.6l6-3.2M2 11.4 8 14.6l6-3.2" />
+  </svg>
+)
+
+export const IconBolt = (props: IconProps) => (
+  <svg {...base(props)}>
+    <path d="M9 1.8 3.6 9h3.6l-.6 5.2L12.4 7H8.8l.2-5.2Z" />
+  </svg>
+)
+
+export const IconCamera = (props: IconProps) => (
+  <svg {...base(props)}>
+    <path d="M2 5.6c0-.7.5-1.2 1.2-1.2h1.6l.8-1.2h4.8l.8 1.2h1.6c.7 0 1.2.5 1.2 1.2v5.6c0 .7-.5 1.2-1.2 1.2H3.2A1.2 1.2 0 0 1 2 11.2V5.6Z" />
+    <circle cx="8" cy="8.2" r="2.2" />
+  </svg>
+)
+
+export const IconTarget = (props: IconProps) => (
+  <svg {...base(props)}>
+    <circle cx="8" cy="8" r="5.6" />
+    <circle cx="8" cy="8" r="2.6" />
+    <circle cx="8" cy="8" r="0.6" fill="currentColor" stroke="none" />
+  </svg>
+)
