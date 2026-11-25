@@ -1,6 +1,7 @@
 import { ApiError, type ApiErrorKind } from './apiError.js'
 import { API_ORIGIN, ANTHROPIC_BASE_URL } from './origin.js'
 import { messagesUrl, type ModelTarget } from './providers.js'
+import { stringifyBody } from './sanitize.js'
 import { streamOpenAI } from './openai.js'
 import { readMessageEvent } from './parseEvent.js'
 import { readServerSentEvents } from './sse.js'
@@ -162,7 +163,7 @@ export async function* streamMessage(
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
       },
-      body: JSON.stringify(toAnthropicBody(body, target.builtin)),
+      body: stringifyBody(toAnthropicBody(body, target.builtin)),
       signal,
     }
   )

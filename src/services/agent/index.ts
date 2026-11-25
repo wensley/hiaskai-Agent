@@ -4,6 +4,7 @@ import { widgetTools } from './tools/widgetTools.js'
 import { agentTools } from './tools/agentTools.js'
 import { askUserTools } from './tools/askUserTool.js'
 import { workspaceTools } from './tools/workspaceTools.js'
+import { utilityTools } from './tools/utilityTools.js'
 import { initExtensionBridge } from './extension.js'
 import { initDesktop } from './desktop/store.js'
 import { connectEnabledServers } from './mcp/store.js'
@@ -25,7 +26,15 @@ export const initAgent = () => {
     return
   }
   started = true
-  registerTools([...browserTools, ...widgetTools, ...agentTools, ...askUserTools, ...workspaceTools])
+  // utilityTools：one_cedric 移植的纯浏览器工具（计算、编码、JSON/CSV、正则、二维码等），无需后端
+  registerTools([
+    ...browserTools,
+    ...widgetTools,
+    ...agentTools,
+    ...askUserTools,
+    ...workspaceTools,
+    ...utilityTools,
+  ])
   initExtensionBridge()
   initDesktop()
   void connectEnabledServers()

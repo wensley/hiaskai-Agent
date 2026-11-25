@@ -1,5 +1,6 @@
 import { ApiError } from './apiError.js'
 import { chatCompletionsUrl, type ModelTarget } from './providers.js'
+import { stringifyBody } from './sanitize.js'
 import { readServerSentEvents } from './sse.js'
 import type {
   ClientToolDefinition,
@@ -217,7 +218,7 @@ const post = async (target: ModelTarget, payload: unknown, signal: AbortSignal) 
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
       },
-      body: JSON.stringify(payload),
+      body: stringifyBody(payload),
       signal,
     })
   } catch (error) {

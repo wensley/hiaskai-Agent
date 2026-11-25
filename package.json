@@ -49,6 +49,7 @@
     "@types/node": "~20.9.2",
     "oxfmt": "0.48.0",
     "oxlint": "1.63.0",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "wrangler": "4.162.0"
   }
 }
