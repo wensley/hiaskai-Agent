@@ -16,10 +16,15 @@ export const QuestionNav = ({
   items,
   activeId,
   onJump,
+  showJump = false,
+  onJumpToBottom,
 }: {
   items: QuestionNavItem[]
   activeId: string | null
   onJump: (id: string) => void
+  /** 已离开底部：在末尾多显示一个「回到最新」 */
+  showJump?: boolean
+  onJumpToBottom?: () => void
 }) => {
   const t = useTranslate()
   const [expanded, setExpanded] = useState(false)
@@ -58,6 +63,23 @@ export const QuestionNav = ({
           </button>
         ))}
       </div>
+      {showJump && onJumpToBottom ? (
+        <button
+          type="button"
+          className={styles.jump}
+          title={t('questionNavLatest')}
+          aria-label={t('questionNavLatest')}
+          onClick={() => {
+            onJumpToBottom()
+            setExpanded(false)
+          }}
+        >
+          <span className={styles.jumpArrow} aria-hidden="true">
+            ↓
+          </span>
+          <span className={styles.text}>{t('questionNavLatest')}</span>
+        </button>
+      ) : null}
     </div>
   )
 }

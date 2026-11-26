@@ -122,3 +122,35 @@ body[data-ds-dark-theme] .nav[data-expanded] .list {
 body[data-ds-dark-theme] .nav[data-expanded] .item:hover {
   background: rgba(103, 158, 254, 0.14);
 }
+
+/* 回到最新：贴在刻度列表末尾，和消息条数无关，永远可见 */
+.jump {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  height: 34px;
+  margin: 0 0 8px;
+  padding: 0 12px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 17px;
+  background: var(--dsw-alias-button-ghost-active-fill);
+  color: var(--dsw-alias-brand-text);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(20, 24, 45, 0.12);
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(--dsw-alias-button-ghost-active-hover);
+  }
+}
+
+.jumpArrow {
+  font-size: 13px;
+  line-height: 1;
+}

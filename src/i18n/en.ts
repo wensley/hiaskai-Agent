@@ -223,6 +223,7 @@ export const en = {
   contextUsageLabel: 'Context used {percent}%',
   contextUsageTip: 'Context {used} / {total} ({percent}%)',
   contextUsageEmpty: 'Context usage appears after the first message',
+  questionNavLatest: 'Jump to latest',
   questionNavLabel: 'Jump to a question',
   deactivatedSearchTooltip: 'Search the web when necessary',
   search: 'Search',

@@ -91,6 +91,8 @@ export const MessageList = ({
   )
   const questionKey = questionItems.map((item) => item.id).join('|')
   const [activeId, setActiveId] = useState<string | null>(null)
+  /** 当前是否贴在底部：离开底部时显示「回到底部」，点一下恢复跟随 */
+  const [atBottom, setAtBottom] = useState(true)
 
   const jumpToQuestion = useCallback((id: string) => {
     const el = scrollRef.current
@@ -195,6 +197,20 @@ export const MessageList = ({
     [session.id, streaming]
   )
 
+  /** 强制回到最新一条：恢复跟随并滚到底，不等待下一段增量 */
+  const jumpToBottom = useCallback(() => {
+    const el = scrollRef.current
+    stickyRef.current = true
+    setAtBottom(true)
+    if (!el) {
+      return
+    }
+    scrollTopRef.current = el.scrollHeight
+    el.scrollTop = el.scrollHeight
+    onTopEdgeChange?.(false)
+  }, [onTopEdgeChange])
+
+
   // 跨移动端断点时切换滚动层，并保持输入框及当前阅读位置。
   useLayoutEffect(() => {
     const el = scrollRef.current
@@ -215,6 +231,7 @@ export const MessageList = ({
         stickyRef.current = false
       }
       scrollTopRef.current = el.scrollTop
+      setAtBottom(stickyRef.current)
       onTopEdgeChange?.(el.scrollTop < EDGE_THRESHOLD)
     }
     el.addEventListener('scroll', onScroll, { passive: true })
@@ -260,8 +277,14 @@ export const MessageList = ({
           </div>
           {footer}
         </div>
-        {!isMobile && questionItems.length > 1 ? (
-          <QuestionNav items={questionItems} activeId={activeId} onJump={jumpToQuestion} />
+        {!isMobile && (questionItems.length > 1 || !atBottom) ? (
+          <QuestionNav
+            items={questionItems}
+            activeId={activeId}
+            onJump={jumpToQuestion}
+            showJump={!atBottom}
+            onJumpToBottom={jumpToBottom}
+          />
         ) : null}
       </div>
     </ScrollToBottomContext.Provider>

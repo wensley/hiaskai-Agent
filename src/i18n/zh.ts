@@ -211,6 +211,7 @@ export const zh = {
   contextUsageLabel: '上下文占用 {percent}%',
   contextUsageTip: '上下文 {used} / {total}（{percent}%）',
   contextUsageEmpty: '发送消息后显示上下文占用',
+  questionNavLatest: '回到最新',
   questionNavLabel: '快速跳转到提问',
   deactivatedSearchTooltip: '按需搜索网页',
   search: '智能搜索',
