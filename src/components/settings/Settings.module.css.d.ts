@@ -56,6 +56,7 @@ declare const styles: {
   readonly "editorInput": string;
   readonly "editorActions": string;
   readonly "editorOk": string;
+  readonly "promptField": string;
 };
 export = styles;
 

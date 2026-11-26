@@ -29,6 +29,7 @@ import {
   setMaxToolRounds,
   setMockAgent,
   setMotion,
+  setSystemPrompt,
   setTemperature,
   setThemePreference,
   setToolApproval,
@@ -121,6 +122,7 @@ const SettingsContent = () => {
             <CustomModels />
           ) : section === 'agent' ? (
             <>
+              <SystemPromptSetting />
               <AgentEnabledSetting />
               <ToolApprovalSetting />
               <MaxStepsSetting />
@@ -361,6 +363,43 @@ const ToggleCell = ({
 )
 
 /** 工具调用总开关：关掉后退化为纯聊天 */
+
+/** 系统提示词：可改身份说明与行为约束；留空或恢复默认即用内置文案 */
+const SystemPromptSetting = () => {
+  const t = useTranslate()
+  const systemPrompt = useSettings((state) => state.systemPrompt)
+  const [draft, setDraft] = useState(() => systemPrompt ?? '')
+  return (
+    <div className={styles.cell}>
+      <div className={styles.label}>{t('settingsSystemPrompt')}</div>
+      <div className={styles.description}>{t('settingsSystemPromptHint')}</div>
+      <div className={styles.promptField}>
+        <textarea
+          className={styles.editorInput}
+          rows={5}
+          value={draft}
+          placeholder={t('settingsSystemPromptPlaceholder')}
+          aria-label={t('settingsSystemPrompt')}
+          onChange={(event) => {
+            setDraft(event.target.value)
+            setSystemPrompt(event.target.value)
+          }}
+        />
+        <Button
+          variant="outlined"
+          size="s"
+          disabled={systemPrompt === null && !draft}
+          onClick={() => {
+            setSystemPrompt(null)
+            setDraft('')
+          }}
+        >
+          {t('settingsSystemPromptReset')}
+        </Button>
+      </div>
+    </div>
+  )
+}
 const AgentEnabledSetting = () => {
   const t = useTranslate()
   const enabled = useSettings((state) => state.agentEnabled)
