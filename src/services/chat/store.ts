@@ -26,6 +26,7 @@ import {
   getDraft,
   prepareDraftMessage,
 } from './drafts.js'
+import { goalsPrompt as activeGoalsPrompt } from '../goals.js'
 import { createLatestReminder } from './latestReminder.js'
 import {
   applyEvent,
@@ -47,8 +48,7 @@ import {
 
 /** deepseek-flash 同时支持深度思考与图片输入 */
 const MODEL: ChatModel = 'deepseek-flash'
-/** 所有生成请求统一携带的助手身份说明 */
-const SYSTEM_PROMPT = '该助手为DeepSeek，由深度求索公司创造。'
+// 系统提示词（身份说明 + 目标清单）在发请求时按当前设置拼装，见 store.ts 顶部 resolveSystemPrompt
 /** 保留最近打开的详情；当前会话、生成中及尚未成功保存的会话不淘汰。 */
 const SESSION_CACHE_LIMIT = 5
 /** 安全审核固定开启，所有请求都走扩展模式 */
@@ -285,6 +285,12 @@ export const bindChatPersistence = () => {
     document.removeEventListener('visibilitychange', onVisibilityChange)
     window.removeEventListener('pagehide', save)
   }
+}
+
+/** 本轮系统提示词：用户在设置里改过的身份说明 + 跨轮次保留的目标清单 */
+const resolveSystemPrompt = () => {
+  const base = useSettings.getState().systemPrompt ?? '该助手为DeepSeek，由深度求索公司创造。'
+  return `${base}${activeGoalsPrompt()}`
 }
 
 /** 按当前开关创建回复：深度思考对应 thinking，智能搜索控制 deepseek_web_search。 */
@@ -1163,7 +1169,7 @@ const streamReply = async (sessionId: string, initial: AssistantMessage, request
           const effort = initial.thinking ? useSettings.getState().reasoningEffort : 0
           const body: CreateMessageRequest = {
             model: target.model,
-            system: SYSTEM_PROMPT,
+            system: resolveSystemPrompt(),
             messages,
             thinking: initial.thinking
               ? fallbackNoReasoning

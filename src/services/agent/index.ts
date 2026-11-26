@@ -5,6 +5,7 @@ import { agentTools } from './tools/agentTools.js'
 import { askUserTools } from './tools/askUserTool.js'
 import { workspaceTools } from './tools/workspaceTools.js'
 import { utilityTools } from './tools/utilityTools.js'
+import { customToolTools, registerCustomTools } from './tools/customTools.js'
 import { initExtensionBridge } from './extension.js'
 import { initDesktop } from './desktop/store.js'
 import { connectEnabledServers } from './mcp/store.js'
@@ -34,7 +35,11 @@ export const initAgent = () => {
     ...askUserTools,
     ...workspaceTools,
     ...utilityTools,
+    // 用 Agent 自己创建 / 删除组合工具：create_tool、delete_tool
+    ...customToolTools,
   ])
+  // 上次会话里建过的自建工具，启动时重新挂回注册表
+  registerCustomTools()
   initExtensionBridge()
   initDesktop()
   void connectEnabledServers()

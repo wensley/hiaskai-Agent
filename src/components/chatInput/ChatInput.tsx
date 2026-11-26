@@ -34,6 +34,8 @@ import { Spectrum } from './Spectrum.js'
 import { ModelPicker } from './ModelPicker.js'
 import { ThinkingSlider } from './ThinkingSlider.js'
 import { ContextRing } from './ContextRing.js'
+import { GoalButton } from './GoalButton.js'
+import { TaskButton } from './TaskButton.js'
 import { AskUserPanel } from '../agent/AskUserPanel.js'
 import { useLiquidGlass } from '../glass/useLiquidGlass.js'
 import { useTranslate } from '../../i18n/index.js'
@@ -235,6 +237,8 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
           </Tooltip>
         </div>
         <div className={styles.right}>
+          <GoalButton />
+          <TaskButton />
           <ContextRing sessionId={sessionId} streaming={streaming} />
           <VoiceButton
             status={voice.status}

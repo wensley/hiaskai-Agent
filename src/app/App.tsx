@@ -18,6 +18,8 @@ import { Welcome } from '../components/session/Welcome.js'
 import { ensureApiKey } from '../components/settings/settingsDialogState.js'
 import { SettingsDialog } from '../components/settings/SettingsDialog.js'
 import { AgentPanel } from '../components/agent/AgentPanel.js'
+import { GoalPanel } from '../components/agent/GoalPanel.js'
+import { TaskPanel } from '../components/agent/TaskPanel.js'
 import { WorkspacePanel } from '../components/workspace/WorkspacePanel.js'
 import {
   closeWorkspacePanel,
@@ -165,6 +167,8 @@ export const App = () => {
       </div>
       <SettingsDialog />
       <AgentPanel />
+      <GoalPanel />
+      <TaskPanel />
       <WorkspacePanel />
       <ApprovalDialog />
       <Toast />

@@ -11,6 +11,7 @@ import {
   type CustomModel,
 } from './api/providers.js'
 import { normalizeLocation, type UserLocation } from './location.js'
+import { defaultSystemPrompt } from './systemPrompt.js'
 
 export type Locale = 'zh-CN' | 'en-US'
 
@@ -45,6 +46,8 @@ type Settings = {
   temperature: number | null
   /** 核采样 top_p，null 表示不下发、用服务端默认值 */
   topP: number | null
+  /** 系统提示词：设置里可改，请求与子 Agent 共用；null 表示用默认 */
+  systemPrompt: string | null
   /** 演示模式：使用本地脚本化模型，便于无 Key 体验工具链路 */
   mockAgent: boolean
   /** 动画特效强度：full 完整，reduced 仅保留必要过渡 */
@@ -69,6 +72,7 @@ const KEYS = {
   temperature: 'chat-agent:temperature',
   topP: 'chat-agent:top-p',
   mockAgent: 'chat-agent:mock-agent',
+  systemPrompt: 'chat-agent:system-prompt',
   motion: 'chat-agent:motion',
 } as const
 
@@ -204,6 +208,7 @@ export const useSettings = create<Settings>(() => ({
   temperature: readOptional(KEYS.temperature, MIN_TEMPERATURE, MAX_TEMPERATURE),
   topP: readOptional(KEYS.topP, MIN_TOP_P, MAX_TOP_P),
   mockAgent: read(KEYS.mockAgent) === 'true',
+  systemPrompt: read(KEYS.systemPrompt) ?? defaultSystemPrompt(),
   motion: read(KEYS.motion) === 'reduced' ? 'reduced' : 'full',
 }))
 
@@ -309,6 +314,13 @@ export const setTopP = (value: number | null) => {
     value === null ? null : Math.min(MAX_TOP_P, Math.max(MIN_TOP_P, Math.round(value * 100) / 100))
   write(KEYS.topP, topP === null ? null : String(topP))
   useSettings.setState({ topP })
+}
+
+/** 传 null 表示恢复默认；空白串也按默认处理，避免请求里 system 为空 */
+export const setSystemPrompt = (systemPrompt: string | null) => {
+  const value = systemPrompt && systemPrompt.trim() ? systemPrompt : null
+  write(KEYS.systemPrompt, value)
+  useSettings.setState({ systemPrompt: value })
 }
 
 export const setMockAgent = (mockAgent: boolean) => {
