@@ -211,6 +211,21 @@ export const MessageList = ({
   }, [onTopEdgeChange])
 
 
+  // 无论桌面还是手机，滚动的都是 scrollRef 指向的这层：手机上是 .scroll，桌面上是 .container
+  useLayoutEffect(() => {
+    const el = scrollRef.current
+    if (!el) {
+      return
+    }
+    const onScroll = () => {
+      const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < STICKY_THRESHOLD
+      setAtBottom(nearBottom)
+    }
+    onScroll()
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [isMobile])
+
   // 跨移动端断点时切换滚动层，并保持输入框及当前阅读位置。
   useLayoutEffect(() => {
     const el = scrollRef.current
@@ -277,7 +292,7 @@ export const MessageList = ({
           </div>
           {footer}
         </div>
-        {!isMobile && (questionItems.length > 1 || !atBottom) ? (
+        {questionItems.length > 1 || !atBottom ? (
           <QuestionNav
             items={questionItems}
             activeId={activeId}

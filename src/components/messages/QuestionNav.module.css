@@ -154,3 +154,18 @@ body[data-ds-dark-theme] .nav[data-expanded] .item:hover {
   font-size: 13px;
   line-height: 1;
 }
+
+/* 手机：导航落到底部输入框上方，只保留「回到最新」，不挡正文 */
+@media not all and (min-width: 768px) {
+  .nav {
+    top: auto;
+    right: 12px;
+    bottom: calc(env(safe-area-inset-bottom) + 132px);
+    transform: none;
+  }
+
+  .jump {
+    margin: 0;
+    box-shadow: 0 6px 20px rgba(20, 24, 45, 0.18);
+  }
+}
