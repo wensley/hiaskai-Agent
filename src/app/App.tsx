@@ -29,6 +29,9 @@ import {
 import { ApprovalDialog } from '../components/agent/ApprovalDialog.js'
 import { Aurora } from '../components/agent/Aurora.js'
 import { Toast } from '../components/base/Toast.js'
+import { ShareDialog } from '../components/share/ShareDialog.js'
+import { ShareLanding } from '../components/share/ShareLanding.js'
+import { initRouter, useRoute } from './router.js'
 import { showToast } from '../components/base/toastState.js'
 import { onUploadNotice } from '../services/attachments.js'
 import { initAgent } from '../services/agent/index.js'
@@ -62,6 +65,8 @@ export const App = () => {
     state.activeId === null ? false : Object.hasOwn(state.streaming, state.activeId)
   )
   const activeId = useChatStore((state) => state.activeId)
+  // 地址栏路由：分享链接走落地页，其余照旧
+  const route = useRoute()
 
   usePreventPageScroll(isMobile)
 
@@ -97,6 +102,8 @@ export const App = () => {
   }, [])
 
   useEffect(() => {
+    // 地址栏路由先起来：深链接要能在 initChat 之前记下目标会话
+    initRouter()
     void initChat()
     // 首次打开先在设置里输入 API Key
     ensureApiKey()
@@ -152,6 +159,8 @@ export const App = () => {
                   ) : null}
                 </div>
               </div>
+            ) : route.kind === 'share' ? (
+              <ShareLanding payload={route.payload} />
             ) : session ? (
               <SessionView
                 session={session}
@@ -166,6 +175,7 @@ export const App = () => {
         <SearchPanel />
       </div>
       <SettingsDialog />
+      <ShareDialog />
       <AgentPanel />
       <GoalPanel />
       <TaskPanel />

@@ -19,6 +19,7 @@ import {
   noteUsage,
 } from './liveStats.js'
 import { noteContextUsage } from './contextUsage.js'
+import { recordUsage } from '../usage.js'
 import {
   clearAllDrafts,
   clearDraft,
@@ -1200,11 +1201,22 @@ const streamReply = async (sessionId: string, initial: AssistantMessage, request
             ? mockStreamMessage(body, controller.signal)
             : streamMessage(target, body, controller.signal)
           const blockIndexes = new Map<number, number>()
+          /** 本轮 message_start 上报的输入口径，message_delta 时一次性记账 */
+          let roundInput: { cacheHit: number; cacheMiss: number } | null = null
           for await (const event of events) {
             receivedContent ||= event.type === 'content_block_start'
             if (event.type === 'message_start') {
               noteUsage(event.message.usage, 'start')
               noteContextUsage(sessionId, event.message.usage)
+              const usage = event.message.usage
+              // 本轮输入口径：稍后在 message_delta 与输出一起记账
+              if (usage) {
+                roundInput = {
+                  cacheHit: usage.cache_read_input_tokens ?? 0,
+                  cacheMiss:
+                    (usage.input_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0),
+                }
+              }
             } else if (event.type === 'content_block_delta') {
               if (event.delta.type === 'text_delta') {
                 noteDelta('text', event.delta.text)
@@ -1213,6 +1225,19 @@ const streamReply = async (sessionId: string, initial: AssistantMessage, request
               }
             } else if (event.type === 'message_delta') {
               noteUsage(event.usage, 'delta')
+              // 一轮回答结束时记一笔：输入取 message_start 口径，输出取累计值
+              if (event.usage && !settings.mockAgent) {
+                recordUsage(
+                  {
+                    model: target.selection,
+                    cacheHit: roundInput ? roundInput.cacheHit : 0,
+                    cacheMiss: roundInput ? roundInput.cacheMiss : 0,
+                    output: event.usage.output_tokens ?? 0,
+                  },
+                  'output'
+                )
+                roundInput = null
+              }
             }
             if (
               event.type === 'message_delta' &&
